@@ -2,7 +2,7 @@
 
 
 #include "Framework/RPGCharacter.h"
-#include "Interfaces/InteractionInterface.h"
+#include "Interfaces/Interface_Interaction.h"
 #include "UIs/RPGHUD.h"
 
 // UE header
@@ -125,7 +125,7 @@ void ARPGCharacter::PerformInteractionCheck()
 
 		if (FHitResult TraceHit; GetWorld()->LineTraceSingleByChannel(TraceHit, TraceStart, TraceEnd, ECC_Visibility, CollisionQueryParams))
 		{
-			if (TraceHit.GetActor()->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass()))
+			if (TraceHit.GetActor()->GetClass()->ImplementsInterface(UInterface_Interaction::StaticClass()))
 			{
 				if (TraceHit.GetActor() != InteractionData.CurrentInteractable)
 				{
@@ -155,8 +155,7 @@ void ARPGCharacter::FoundInteractable(AActor* NewInteractable)
 	InteractionData.CurrentInteractable = NewInteractable;
 	TargetInteractable = NewInteractable;
 
-	HUD->UpdateInteractionWidget(TargetInteractable->GetInteractableData());
-	
+	UpdateInteractionWidget();
 	TargetInteractable->BeginFocus();
 }
 
@@ -193,9 +192,9 @@ void ARPGCharacter::BeginInteract()
 	
 	if (IsValid(TargetInteractable.GetObject()))
 	{
-		TargetInteractable->BeginFocus();
+		// TargetInteractable->BeginFocus();
 
-		if (FMath::IsNearlyZero(TargetInteractable->GetInteractableData()->InteractionDuration, 0.1f))
+		if (FMath::IsNearlyZero(TargetInteractable->GetInteractableData().InteractionDuration, 0.1f))
 		{
 			Interact();
 		}
@@ -204,7 +203,7 @@ void ARPGCharacter::BeginInteract()
 			GetWorldTimerManager().SetTimer(InteractionTimerHandle,
 				this,
 				&ARPGCharacter::Interact,
-				TargetInteractable->GetInteractableData()->InteractionDuration,
+				TargetInteractable->GetInteractableData().InteractionDuration,
 				false);
 		}
 	}

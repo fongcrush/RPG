@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 
-#include "InteractionInterface.generated.h"
+#include "Interface_Interaction.generated.h"
 
 UENUM()
 enum class EInteractableType : uint8
 {
 	Pickup UMETA(DisplayName = "Pickup"),
-	NonPlayerCharacter UMETA(DisplayName = "NonPlayerCharacter"),
+	NPC UMETA(DisplayName = "NPC"),
 	Device UMETA(DisplayName = "Device"),
 	Toggle UMETA(DisplayName = "Toggle"),
 	Container UMETA(DisplayName = "Container")
@@ -51,7 +51,7 @@ class ARPGCharacter;
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UInteractionInterface : public UInterface
+class UInterface_Interaction : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -59,7 +59,7 @@ class UInteractionInterface : public UInterface
 /**
  * 
  */
-class RPG_API IInteractionInterface
+class RPG_API IInterface_Interaction
 {
 	GENERATED_BODY()
 
@@ -69,6 +69,8 @@ public:
 	virtual void BeginInteract();
 	virtual void EndInteract();
 	virtual void Interact(TObjectPtr<ARPGCharacter> InteractionCharacter);
+	const FInteractableData& GetInteractableData() { return InteractableData; }
 
-	// virtual FInteractableData* GetInteractableData();
+protected:
+	FInteractableData InteractableData;
 };

@@ -4,32 +4,17 @@
 #include "Items/ItemBase.h"
 
 #include "Components/InventoryComponent.h"
-#include "Engine/AssetManager.h"
-#include "Engine/StreamableManager.h"
 
 UItemBase::UItemBase()
 {
 	ResetItemFlags();
-	
-	bIsLoaded = false;
 }
 
 void UItemBase::PostInitProperties()
 {
 	UObject::PostInitProperties();
 
-	Initialize();
-}
-
-void UItemBase::Initialize()
-{
-	if (ItemDataHandle.DataTable)
-	{
-		if (FItemDataBase* ItemData = ItemDataHandle.DataTable->FindRow<FItemDataBase>(ItemDataHandle.RowName, ItemDataHandle.RowName.ToString()))
-		{
-			bIsLoaded = true;
-		}
-	}
+	DataReference = ItemDataHandle.GetRow<FItemDataBase>(GetName());
 }
 
 UItemBase* UItemBase::CreateItemCopy() const

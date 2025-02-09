@@ -26,7 +26,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction Widget | Player Reference")
 	TObjectPtr<ARPGCharacter> InteractionCharacter;
 	
-	void UpdateWidget(const FInteractableData* InteractableData);
+	void UpdateWidget(const FInteractableData& InteractableData);
 
 protected:
 	UPROPERTY(VisibleAnywhere, meta = (BindWidget), Category = "Interaction Widget | Interactable Data")

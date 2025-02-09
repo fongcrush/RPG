@@ -7,7 +7,7 @@
 #include "RPGCharacter.generated.h"
 
 class UInventoryComponent;
-class IInteractionInterface;
+class IInterface_Interaction;
 class USpringArmComponent;
 class UCameraComponent;
 class ARPGHUD;
@@ -77,7 +77,7 @@ protected:
 	TObjectPtr<UInventoryComponent> PlayerInventory;
 
 	UPROPERTY(VisibleAnywhere, Category = "Character | Interaction")
-	TScriptInterface<IInteractionInterface> TargetInteractable;
+	TScriptInterface<IInterface_Interaction> TargetInteractable;
 
 	float InteractionCheckFrequency;
 

@@ -34,7 +34,6 @@ public:
 	UItemBase();
 	
 	virtual void PostInitProperties() override;
-	virtual void Initialize();
 	
 	UItemBase* CreateItemCopy() const;
 	
@@ -69,6 +68,4 @@ protected:
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	FItemDataBase* DataReference;
-	
-	bool bIsLoaded;
 };

@@ -79,7 +79,7 @@ void ARPGHUD::HideInteractionWidget() const
 	}
 }
 
-void ARPGHUD::UpdateInteractionWidget(const FInteractableData* InteractableData) const
+void ARPGHUD::UpdateInteractionWidget(const FInteractableData& InteractableData) const
 {
 	if (InteractionWidget)
 	{

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "Interfaces/InteractionInterface.h"
+#include "Interfaces/Interface_Interaction.h"
 #include "RPGHUD.generated.h"
 
 class UInteractionWidget;
@@ -39,7 +39,7 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	void UpdateInteractionWidget(const FInteractableData* InteractableData) const;
+	void UpdateInteractionWidget(const FInteractableData& InteractableData) const;
 	void ShowInteractionWidget() const;
 	void HideInteractionWidget() const;
 	
