@@ -6,12 +6,15 @@
 #include "Data/ItemDataStructs.h"
 #include "ItemBase.generated.h"
 
+class AItemActor;
 class UInventoryComponent;
 
 UCLASS()
 class RPG_API UItemBase : public UObject
 {
 	GENERATED_BODY()
+
+	friend AItemActor;
 	
 public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -19,9 +22,6 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UPROPERTY()
 	UInventoryComponent* OwingInventory;
-
-	UPROPERTY(EditAnywhere, Category = "Item")
-	FDataTableRowHandle ItemDataHandle;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Item")
 	int32 Quantity;
@@ -32,8 +32,6 @@ public:
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UItemBase();
-	
-	virtual void PostInitProperties() override;
 	
 	UItemBase* CreateItemCopy() const;
 	
@@ -61,7 +59,7 @@ public:
 	UFUNCTION(Category = "Item")
 	virtual void Use(class ARPGCharacter* Character);
 
-	bool operator==(const FName& OtherRowName) const { return this->ItemDataHandle.RowName == OtherRowName; }
+	bool operator==(const FItemDataBase* OtherDataReference) const { return this->DataReference == OtherDataReference; }
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓

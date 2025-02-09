@@ -36,7 +36,7 @@ public:
 	TObjectPtr<UTextBlock> Description;
 	
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UTextBlock> StackSizeText;
+	TObjectPtr<UTextBlock> StackSize;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> SellValue;

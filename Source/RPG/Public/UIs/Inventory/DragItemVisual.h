@@ -6,6 +6,11 @@
 #include "Blueprint/UserWidget.h"
 #include "DragItemVisual.generated.h"
 
+
+class UTextBlock;
+class UImage;
+class UItemBase;
+
 /**
  * 
  */
@@ -13,8 +18,14 @@ UCLASS()
 class RPG_API UDragItemVisual : public UUserWidget
 {
 	GENERATED_BODY()
+
+protected:
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> ItemIcon;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> ItemQuantity;
 	
-	
-	
-	
+	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
+	TObjectPtr<UItemBase> ItemReference;
 };

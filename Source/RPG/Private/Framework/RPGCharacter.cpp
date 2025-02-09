@@ -52,7 +52,7 @@ ARPGCharacter::ARPGCharacter()
 
 	PlayerInventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("PlayerInventory"));
 	PlayerInventory->SetSlotsCapacity(20);
-	PlayerInventory->SetWeightCapacity(50.f);
+	PlayerInventory->SetWeightCapacity(100.f);
 
 	InteractionCheckFrequency = 0.1f;
 	InteractionCheckDistance = 175.f;
@@ -171,6 +171,7 @@ void ARPGCharacter::NoInteractableFound()
 		if (IsValid(TargetInteractable.GetObject()))
 		{
 			TargetInteractable->EndFocus();
+			EndInteract();
 		}
 
 		HUD->HideInteractionWidget();
@@ -192,7 +193,7 @@ void ARPGCharacter::BeginInteract()
 	
 	if (IsValid(TargetInteractable.GetObject()))
 	{
-		// TargetInteractable->BeginFocus();
+		TargetInteractable->BeginInteract();
 
 		if (FMath::IsNearlyZero(TargetInteractable->GetInteractableData().InteractionDuration, 0.1f))
 		{

@@ -28,23 +28,23 @@ protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UPROPERTY(EditDefaultsOnly, Category="Inventory Slot")
-	TSubclassOf<UDragItemVisual> DragItemVisualClass;
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UBorder> ItemBorder;
 
-	UPROPERTY(EditDefaultsOnly, Category="Inventory Slot")
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> ItemIcon;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> ItemQuantity;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Inventory Slot", meta=(BlueprintBaseOnly))
 	TSubclassOf<UInventoryTooltip> TooltipClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Inventory Slot", meta=(BlueprintBaseOnly))
+	TSubclassOf<UDragItemVisual> DragItemVisualClass;
 	
 	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
 	TObjectPtr<UItemBase> ItemReference;
-
-	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
-	TObjectPtr<UBorder> ItemBorder;
-
-	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
-	TObjectPtr<UImage> ItemIcon;
-
-	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
-	TObjectPtr<UTextBlock> ItemQuantity;
 	
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS

@@ -10,13 +10,6 @@ UItemBase::UItemBase()
 	ResetItemFlags();
 }
 
-void UItemBase::PostInitProperties()
-{
-	UObject::PostInitProperties();
-
-	DataReference = ItemDataHandle.GetRow<FItemDataBase>(GetName());
-}
-
 UItemBase* UItemBase::CreateItemCopy() const
 {
 	UItemBase* ItemCopy = DuplicateObject(this, nullptr);

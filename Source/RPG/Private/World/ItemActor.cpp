@@ -15,6 +15,8 @@ AItemActor::AItemActor()
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
 	PickupMesh->SetSimulatePhysics(true);
 	SetRootComponent(PickupMesh);
+	
+	Quantity = 1;
 }
 
 void AItemActor::BeginPlay()
@@ -26,15 +28,16 @@ void AItemActor::BeginPlay()
 
 void AItemActor::InitializePickup()
 {
-	const FItemDataBase* ItemData = ItemDataHandle.GetRow<FItemDataBase>(GetName());
+	if (FItemDataBase* ItemData = ItemDataHandle.GetRow<FItemDataBase>(GetName()))
+	{
+		ItemReference = NewObject<UItemBase>(this);
+		ItemReference->DataReference = ItemData;
+		ItemReference->SetQuantity(Quantity);
 
-	ItemReference = NewObject<UItemBase>(this);
+		PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
 
-	Quantity <= 0 ? ItemReference->SetQuantity(1) : ItemReference->SetQuantity(Quantity);
-
-	PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
-
-	UpdateInteractableData();
+		UpdateInteractableData();
+	}
 }
 
 
@@ -42,8 +45,10 @@ void AItemActor::InitializeDrop(const TObjectPtr<UItemBase>& DropItem, int32 InQ
 {
 	// TODO: 수정 필요
 	ItemReference = DropItem;
+	
 	DropItem->Quantity <= 0 ? ItemReference->SetQuantity(1) : ItemReference->SetQuantity(InQuantity);
 	ItemReference->GetDataReference()->Weight = DropItem->GetItemSingleWeight();
+	ItemReference->OwingInventory = nullptr;
 	PickupMesh->SetStaticMesh(DropItem->GetDataReference()->AssetData.Mesh);
 
 	UpdateInteractableData();
@@ -87,11 +92,12 @@ void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 {
 	if (!IsPendingKillPending())
 	{
-		if (ItemReference)
+		if (!ItemReference)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("인벤토리 속 아이템 참조가 null 입니다"));
 			return;
 		}
+		
 		// TODO: 플레이어 인벤토리에 아이템 추가 및 조정
 		if (const TObjectPtr<UInventoryComponent> PlayerInventory = Taker->GetInventory())
 		{
@@ -125,17 +131,13 @@ void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 void AItemActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	if (ItemReference)
+	
+	const FName ChangedPropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.GetPropertyName() : NAME_None;
+	if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(FDataTableRowHandle, RowName))
 	{
-		const FName ChangedPropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.GetPropertyName() : NAME_None;
-		if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(FDataTableRowHandle, RowName))
+		if (const FItemDataBase* ItemData = ItemDataHandle.GetRow<FItemDataBase>(GetName()))
 		{
-			const FName& RowName = ItemDataHandle.RowName;
-			if (const FItemDataBase* ItemData = ItemDataHandle.DataTable->FindRow<FItemDataBase>(RowName, RowName.ToString()))
-			{
-				PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
-			}
+			PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
 		}
 	}
 }

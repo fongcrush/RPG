@@ -41,10 +41,9 @@ UItemBase* UInventoryComponent::FindNextItemByID(UItemBase* Item) const
 
 UItemBase* UInventoryComponent::FindNextPartialStack(UItemBase* Item) const
 {
-	if (const TArray<TObjectPtr<UItemBase>>::ElementType* Result = InventoryContents.FindByPredicate(
-		[&Item](const UItemBase* InventoryItem)
+	if (const TArray<TObjectPtr<UItemBase>>::ElementType* Result = InventoryContents.FindByPredicate([&Item](const UItemBase* InventoryItem)
 		{
-			return (InventoryItem->ItemDataHandle.RowName == Item->ItemDataHandle.RowName) && !InventoryItem->IsFullStack();
+			return (InventoryItem->GetDataReference() == Item->GetDataReference()) && !InventoryItem->IsFullStack();
 		}))
 	{
 		return *Result;

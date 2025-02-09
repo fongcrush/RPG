@@ -20,7 +20,7 @@ void UInventoryTooltip::NativeConstruct()
 		{
 			Name->SetText(ItemBeingHovered->GetItemName());
 			Description->SetText(ItemBeingHovered->GetDataReference()->Description);
-			StackSizeText->SetText(FText::AsNumber(ItemBeingHovered->Quantity));
+			StackSize->SetText(FText::AsNumber(ItemBeingHovered->Quantity));
 			StackWeight->SetText(FText::AsNumber(ItemBeingHovered->GetItemStackWeight()));
 			SellValue->SetText(FText::AsNumber(ItemBeingHovered->GetDataReference()->SellValue));
 
@@ -41,6 +41,33 @@ void UInventoryTooltip::NativeConstruct()
 			case EItemQuality::Mythical:
 				Quality->SetText(FText::FromString(TEXT("신화")));
 				break;
+			}
+
+			switch (ItemBeingHovered->GetDataReference()->Type)
+			{
+			case EItemType::Weapon:
+				break;
+			case EItemType::Amor:
+				break;
+			case EItemType::Shield:
+				break;
+			case EItemType::Spell:
+				break;
+			case EItemType::Mundane:
+				break;
+			case EItemType::Consumable:
+				break;
+			case EItemType::Quest:
+				break;
+			}
+
+			if (ItemBeingHovered->GetDataReference()->bIsStackable)
+			{
+				StackSize->SetText(FText::AsNumber(ItemBeingHovered->Quantity));
+			}
+			else
+			{
+				StackSize->SetVisibility(ESlateVisibility::Collapsed);
 			}
 		}
 	}

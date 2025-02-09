@@ -18,17 +18,17 @@ protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UPROPERTY(EditAnywhere, Category = "Pickup | Components")
+	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> PickupMesh;
+	
+	UPROPERTY()
+	TObjectPtr<UItemBase> ItemReference;
 	
 	UPROPERTY(EditAnywhere, Category = "Pickup | Item")
 	int32 Quantity;
 	
 	UPROPERTY(EditAnywhere, Category = "Pickup | Item")
 	FDataTableRowHandle ItemDataHandle;
-	
-	UPROPERTY()
-	TObjectPtr<UItemBase> ItemReference;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
