@@ -77,6 +77,6 @@ DerivedDataCache/*
 .idea/
 
 #solution
-.sln
+*.sln
 
-.lnk
+*.lnk
