@@ -32,8 +32,9 @@ public:
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UItemBase();
-	
-	UItemBase* CreateItemCopy() const;
+
+	/* DuplicateObject는 UPROPERTY() 선언된 맴버만 복사하므로 수동 복사 */
+	UItemBase* CreateCopy();
 	
 	FORCEINLINE void ResetItemFlags() { bIsCopy = false; bIsPickup = false; }
 

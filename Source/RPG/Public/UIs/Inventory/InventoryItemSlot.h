@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blueprint/IUserObjectListEntry.h"
 #include "Blueprint/UserWidget.h"
 #include "InventoryItemSlot.generated.h"
 
@@ -16,7 +17,7 @@ class UItemBase;
  * 인벤토리의 각 아이템 항목(칸)을 나타내는 위젯 클래스
  */
 UCLASS()
-class RPG_API UInventoryItemSlot : public UUserWidget
+class RPG_API UInventoryItemSlot : public UUserWidget, public IUserObjectListEntry
 {
 	GENERATED_BODY()
 	

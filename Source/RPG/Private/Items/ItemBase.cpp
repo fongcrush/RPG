@@ -10,11 +10,16 @@ UItemBase::UItemBase()
 	ResetItemFlags();
 }
 
-UItemBase* UItemBase::CreateItemCopy() const
+UItemBase* UItemBase::CreateCopy()
 {
-	UItemBase* ItemCopy = DuplicateObject(this, nullptr);
-	
-	return ItemCopy;
+	UItemBase* NewItem = NewObject<UItemBase>(this);
+	NewItem->ResetItemFlags();
+	NewItem->OwingInventory = OwingInventory;
+	NewItem->DataReference = DataReference;
+	NewItem->Quantity = Quantity;;
+	NewItem->bIsCopy = true;
+
+	return NewItem;
 }
 
 void UItemBase::SetQuantity(const int32 NewQuantity)

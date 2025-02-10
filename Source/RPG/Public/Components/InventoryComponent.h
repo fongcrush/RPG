@@ -108,15 +108,9 @@ public:
 	FORCEINLINE float GetWeightCapacity() const { return WeightCapacity; }
 	
 	UFUNCTION(Category = "Inventory")
-	FORCEINLINE int32 GetSlotsCapacity() const { return SlotsCapacity; }
-	
-	UFUNCTION(Category = "Inventory")
 	FORCEINLINE TArray<UItemBase*> GetInventoryContents() const { return InventoryContents;}
 	
-	// Setter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UFUNCTION(Category = "Inventory")
-	FORCEINLINE void SetSlotsCapacity(const int32 NewSlotsCapacity) { SlotsCapacity = NewSlotsCapacity; }
-	
+	// Setter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
 	UFUNCTION(Category = "Inventory")
 	FORCEINLINE void SetWeightCapacity(const float NewWeightCapacity) { WeightCapacity = NewWeightCapacity; }
 	
@@ -130,10 +124,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	float TotalWeight;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	int32 SlotsCapacity;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Inventory")
+	UPROPERTY(EditAnywhere, Category = "Inventory")
 	float WeightCapacity;
 	
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -145,5 +136,5 @@ protected:
 	int32 CalculateQuantityForFull(const TObjectPtr<UItemBase>& Item, const int32 Quantity) const;
 	FItemAddResult HandleNoneStackableItems(const TObjectPtr<UItemBase>& Item, const int32 Quantity);
 	int32 HandleStackableItems(const TObjectPtr<UItemBase>& Item, const int32 Quantity);
-	void AddNewItem(TObjectPtr<UItemBase> Item, int32 Quantity);
+	void AddNewItem(const TObjectPtr<UItemBase>& Item, int32 Quantity);
 };

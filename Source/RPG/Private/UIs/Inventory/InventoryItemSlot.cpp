@@ -9,6 +9,7 @@
 #include "Components/TextBlock.h"
 
 // User Defined
+#include "Components/TileView.h"
 #include "Items/ItemBase.h"
 #include "UIs/Inventory/DragItemVisual.h"
 #include "UIs/Inventory/InventoryTooltip.h"
@@ -22,7 +23,6 @@ void UInventoryItemSlot::NativeOnInitialized()
 		UInventoryTooltip* Tooltip = CreateWidget<UInventoryTooltip>(this, TooltipClass);
 		Tooltip->SlotBeingHovered = this;
 		SetToolTip(Tooltip);
-		
 	}
 }
 
@@ -35,19 +35,19 @@ void UInventoryItemSlot::NativeConstruct()
 		switch (ItemReference->GetDataReference()->Quality)
 		{
 		case EItemQuality::Normal:
-			ItemBorder->SetBrushColor(FLinearColor::Transparent);
+			ItemBorder->Background.OutlineSettings.Color = FLinearColor::White;
 			break;
 		case EItemQuality::Rare:
-			ItemBorder->SetBrushColor(FLinearColor::Green);
+			ItemBorder->Background.OutlineSettings.Color = FLinearColor::Green;
 			break;
 		case EItemQuality::Unique:
-			ItemBorder->SetBrushColor(FLinearColor::Blue);
+			ItemBorder->Background.OutlineSettings.Color = FLinearColor::Blue;
 			break;
 		case EItemQuality::Legendary:
-			ItemBorder->SetBrushColor(FLinearColor::Red);
+			ItemBorder->Background.OutlineSettings.Color = FLinearColor::Red;
 			break;
 		case EItemQuality::Mythical:
-			ItemBorder->SetBrushColor(FLinearColor::Yellow);
+			ItemBorder->Background.OutlineSettings.Color = FLinearColor::Yellow;
 			break;
 		default:;
 		}

@@ -49,16 +49,16 @@ void ARPGHUD::ToggleMenu()
 	{
 		HideMenu();
 		
-		const FInputModeGameOnly InputMode;
-		GetOwningPlayerController()->SetInputMode(InputMode); // 게임 입력 모드로 변경
+		const FInputModeGameOnly InputModeGameOnly;
+		GetOwningPlayerController()->SetInputMode(InputModeGameOnly); // 게임 입력 모드로 변경
 		GetOwningPlayerController()->SetShowMouseCursor(false); // 마우스 커서 숨기기
 	}
 	else
 	{
 		DisplayMenu();
 		
-		const FInputModeGameAndUI InputMode;
-		GetOwningPlayerController()->SetInputMode(InputMode); // 게임과 UI 입력 모드로 변경
+		const FInputModeGameAndUI InputModeGameAndUI;
+		GetOwningPlayerController()->SetInputMode(InputModeGameAndUI); // 게임과 UI 입력 모드로 변경
 		GetOwningPlayerController()->SetShowMouseCursor(true); // 마우스 커서 보이기
 	}
 }

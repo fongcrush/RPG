@@ -21,7 +21,7 @@ void UInventoryPanel::NativeOnInitialized()
 	{
 		Inventory = PlayerCharacter->GetInventory();
 		if (Inventory)
-		{
+		{			
 			Inventory->OnInventoryChanged.AddUObject(this, &UInventoryPanel::RefreshInventory);
 			SetInfoText();
 		}
@@ -31,12 +31,8 @@ void UInventoryPanel::NativeOnInitialized()
 
 void UInventoryPanel::SetInfoText() const
 {
-	WeightInfo->SetText(FText::Format(FText::FromString(TEXT("{0}/{1}")),
-	                                  Inventory->GetTotalWeight(),
-	                                  Inventory->GetWeightCapacity()));
-	CapacityInfo->SetText(FText::Format(FText::FromString(TEXT("{0}/{1}")),
-	                                    Inventory->GetInventoryContents().Num(),
-	                                    Inventory->GetSlotsCapacity()));
+	CurrentWeightInfo->SetText(FText::FromString(FString::Printf(TEXT("%.2f"), Inventory->GetTotalWeight())));
+	CapacityInfo->SetText(FText::FromString(FString::Printf(TEXT("%.2f"), Inventory->GetWeightCapacity())));
 }
 
 void UInventoryPanel::RefreshInventory()

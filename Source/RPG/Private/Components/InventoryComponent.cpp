@@ -9,7 +9,7 @@
 UInventoryComponent::UInventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-	
+	TotalWeight = 0.f;
 }
 
 void UInventoryComponent::BeginPlay()
@@ -86,39 +86,22 @@ int32 UInventoryComponent::RemoveMultipleStack(UItemBase* Item, const int32 Quan
 
 void UInventoryComponent::SplitExistingStack(UItemBase* Item, const int32 Quantity)
 {
-	if (InventoryContents.Num() < SlotsCapacity)
-	{
-		RemoveMultipleStack(Item, Quantity);
-		AddNewItem(Item, Quantity);
-	}
+	RemoveMultipleStack(Item, Quantity);
+	AddNewItem(Item, Quantity);
 }
 
 FItemAddResult UInventoryComponent::HandleNoneStackableItems(const TObjectPtr<UItemBase>& Item, const int32 Quantity)
 {
-	// 아이템 무게가 올바른지 확인
-	if (FMath::IsNearlyZero(Item->GetItemStackWeight()) || Item->GetItemStackWeight() < 0)
-	{
-		return FItemAddResult::AddedNone(FText::Format(
-			FText::FromString(TEXT("인벤토리에 {0}를 추가할수 없습니다. 잘못된 중량입니다.")),Item->GetDataReference()->Name));
-	}
-
-	// 아이템 무게가 가방 용량을 초과하는지 확인
+	// 가방 용량 초과인지 확인
 	if (TotalWeight + Item->GetItemStackWeight() > WeightCapacity)
 	{
 		return FItemAddResult::AddedNone(FText::Format(
 			FText::FromString(TEXT("인벤토리에 {0}를 추가할수 없습니다. 중량이 초과됩니다.")),Item->GetDataReference()->Name));
 	}
 
-	// 아이템 슬롯이 가득 찼는지 확인
-	if (InventoryContents.Num() >= SlotsCapacity)
-	{
-		return FItemAddResult::AddedNone(FText::Format(
-			FText::FromString(TEXT("인벤토리에 {0}를 추가할수 없습니다. 슬롯이 가득 찼습니다.")),Item->GetDataReference()->Name));
-	}
-
 	AddNewItem(Item, Quantity);
 	return FItemAddResult::AddedAll(1, FText::Format(
-			FText::FromString(TEXT("인벤토리에 {1} 를 추가했습니다.")), Quantity,Item->GetDataReference()->Name));
+			FText::FromString(TEXT("인벤토리에 {0} 를 추가했습니다.")),Item->GetDataReference()->Name));
 }
 
 int32 UInventoryComponent::HandleStackableItems(const TObjectPtr<UItemBase>& Item, const int32 Quantity)
@@ -152,14 +135,14 @@ FItemAddResult UInventoryComponent::HandleAddItem(UItemBase* Item)
 		if (StackableQuantityAdded <= 0)
 		{
 			return FItemAddResult::AddedNone(FText::Format(
-				FText::FromString(TEXT("인벤토리에 {0}를 추가할수 없습니다. 잘못된 중량입니다.")),Item->GetDataReference()->Name));
+				FText::FromString(TEXT("인벤토리에 {0}를 추가할수 없습니다. 잘못된 수량입니다.")),Item->GetDataReference()->Name));
 		}
 	}
 
 	return FItemAddResult::AddedNone(FText::FromString(TEXT("인벤토리에 아이템을 추가할수 없습니다.")));
 }
 
-void UInventoryComponent::AddNewItem(TObjectPtr<UItemBase> Item, int32 Quantity)
+void UInventoryComponent::AddNewItem(const TObjectPtr<UItemBase>& Item, int32 Quantity)
 {
 	UItemBase* NewItem;
 
@@ -173,7 +156,7 @@ void UInventoryComponent::AddNewItem(TObjectPtr<UItemBase> Item, int32 Quantity)
 	else
 	{
 		// 아이템을 일부 옮겨 담거나 나눌 때
-		NewItem = Item->CreateItemCopy();
+		NewItem = Item->CreateCopy();
 	}
 
 	NewItem->OwingInventory = this;

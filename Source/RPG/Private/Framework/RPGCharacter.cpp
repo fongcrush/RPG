@@ -51,8 +51,7 @@ ARPGCharacter::ARPGCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	PlayerInventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("PlayerInventory"));
-	PlayerInventory->SetSlotsCapacity(20);
-	PlayerInventory->SetWeightCapacity(100.f);
+	PlayerInventory->SetWeightCapacity(200.f);
 
 	InteractionCheckFrequency = 0.1f;
 	InteractionCheckDistance = 175.f;

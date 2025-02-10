@@ -92,7 +92,7 @@ void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 {
 	if (!IsPendingKillPending())
 	{
-		if (!ItemReference)
+		if (ItemReference.IsNull())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("인벤토리 속 아이템 참조가 null 입니다"));
 			return;
@@ -135,9 +135,12 @@ void AItemActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 	const FName ChangedPropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.GetPropertyName() : NAME_None;
 	if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(FDataTableRowHandle, RowName))
 	{
-		if (const FItemDataBase* ItemData = ItemDataHandle.GetRow<FItemDataBase>(GetName()))
+		if (FItemDataBase* ItemData = ItemDataHandle.GetRow<FItemDataBase>(GetName()))
 		{
 			PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
+
+			// DataTable에서 RowName이 변경되어도 Handle이 가리키는 RowName은 바뀌지가 않아서 수동 변경 해줘야 함
+			ItemData->OnRowNameChanged.AddLambda([&](FName RenamedRowName){ ItemDataHandle.RowName = RenamedRowName; });
 		}
 	}
 }

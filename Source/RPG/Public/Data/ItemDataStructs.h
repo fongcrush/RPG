@@ -39,6 +39,10 @@ struct FItemAssetData
 	UStaticMesh* Mesh;
 };
 
+#if WITH_EDITOR
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnRowNameChanged, FName)
+#endif
+
 USTRUCT()
 struct FItemDataBase : public FTableRowBase
 {
@@ -75,11 +79,13 @@ struct FItemDataBase : public FTableRowBase
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
 	float SellValue;
-	
+
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
 	FItemAssetData AssetData;
+
 	
+	FOnRowNameChanged OnRowNameChanged;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
@@ -90,16 +96,20 @@ struct FItemDataBase : public FTableRowBase
 			+ TEXT("_") + UEnum::GetDisplayValueAsText(Quality).ToString()
 			+ TEXT("_") + Name.ToString());
 		NewRawName.SetNumber(1);
-		
+
 		while (InDataTable->FindRowUnchecked(NewRawName))
 		{
 			NewRawName.SetNumber(NewRawName.GetNumber() + 1);
 		}
-		
+
 		if (InRowName != NewRawName)
 		{
 			FDataTableEditorUtils::RenameRow(const_cast<UDataTable*>(InDataTable), InRowName, NewRawName);
 			FDataTableEditorUtils::SelectRow(InDataTable, NewRawName);
+			if (OnRowNameChanged.IsBound())
+			{
+				OnRowNameChanged.Broadcast(NewRawName);
+			}
 		}
 	}
 
@@ -109,30 +119,20 @@ struct FItemDataBase : public FTableRowBase
 			+ TEXT("_") + UEnum::GetDisplayValueAsText(Quality).ToString()
 			+ TEXT("_") + Name.ToString());
 		NewRawName.SetNumber(1);
-		
+
 		while (InDataTable->FindRowUnchecked(NewRawName))
 		{
 			NewRawName.SetNumber(NewRawName.GetNumber());
 		}
-		
+
 		if (InRowName != NewRawName)
 		{
 			FDataTableEditorUtils::RenameRow(const_cast<UDataTable*>(InDataTable), InRowName, NewRawName);
 			FDataTableEditorUtils::SelectRow(InDataTable, NewRawName);
+			if (OnRowNameChanged.IsBound())
+			{
+				OnRowNameChanged.Broadcast(NewRawName);
+			}
 		}
-	}
-
-private:
-	static FString DuplicateSuffix(const UDataTable* InDataTable, const FName& InRowName)
-	{
-		FName NewRawName = *(InRowName.ToString() + TEXT("_0"));
-		int32 Suffix = 0;
-		while (InDataTable->FindRowUnchecked(NewRawName))
-		{
-			NewRawName = *(InRowName.ToString() + FString::Printf(TEXT("_%d"), Suffix));
-			++Suffix;
-		}
-		
-		return FString::FromInt(Suffix);
 	}
 };
