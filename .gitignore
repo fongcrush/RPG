@@ -75,3 +75,8 @@ DerivedDataCache/*
 
 #Rider
 .idea/
+
+#solution
+.sln
+
+.lnk
