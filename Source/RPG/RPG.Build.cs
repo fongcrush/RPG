@@ -14,14 +14,18 @@ public class RPG : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"InputCore",
-			"UMG", "EditorScriptingUtilities", "DataTableEditor"
+			"UMG",
+			"SlateCore",
+			"Slate",
+			"EditorScriptingUtilities",
+			"DataTableEditor",
+			"AssetRegistry",
+			"FongcrushUtilities",
 		});
 
 		// Uncomment if you are using Slate UI
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"Slate",
-			"SlateCore",
 			"EnhancedInput"
 		});
 		

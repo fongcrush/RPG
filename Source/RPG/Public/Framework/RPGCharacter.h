@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "RPGCharacter.generated.h"
 
+class UItemStackBase;
 class UInventoryComponent;
 class IInterface_Interaction;
 class USpringArmComponent;
@@ -40,6 +41,11 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 #pragma region public_functions
 	ARPGCharacter();
+	
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	virtual void Tick(float DeltaTime) override;
+	
 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
@@ -50,11 +56,9 @@ public:
 	FORCEINLINE bool IsInteracting() const { return GetWorldTimerManager().IsTimerActive(InteractionTimerHandle);}
 
 	void UpdateInteractionWidget() const;
-	
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	virtual void Tick(float DeltaTime) override;
 
+	void DropItem(UItemStackBase* ItemToDrop, const int32 Quantity);
+	
 #pragma endregion
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓

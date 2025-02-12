@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Data/ItemDataStructs.h"
-#include "ItemBase.generated.h"
+#include "ItemStackBase.generated.h"
 
 class AItemActor;
 class UInventoryComponent;
 
 UCLASS()
-class RPG_API UItemBase : public UObject
+class RPG_API UItemStackBase : public UObject
 {
 	GENERATED_BODY()
 
@@ -21,7 +21,7 @@ public:
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UPROPERTY()
-	UInventoryComponent* OwingInventory;
+	UInventoryComponent* OwningInventory;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Item")
 	int32 Quantity;
@@ -31,12 +31,10 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UItemBase();
+	UItemStackBase();
 
 	/* DuplicateObject는 UPROPERTY() 선언된 맴버만 복사하므로 수동 복사 */
-	UItemBase* CreateCopy();
-	
-	FORCEINLINE void ResetItemFlags() { bIsCopy = false; bIsPickup = false; }
+	UItemStackBase* CreateCopy();
 
 	FORCEINLINE FItemDataBase* GetDataReference() const { return DataReference; }
 	
@@ -44,16 +42,27 @@ public:
 	FORCEINLINE FText GetItemName() const { return DataReference->Name; }
 	
 	UFUNCTION(Category = "Item")
-	FORCEINLINE float GetItemStackWeight() const { return Quantity * DataReference->Weight; }
+	FORCEINLINE float GetStackWeight() const { return Quantity * DataReference->Weight; }
 	
 	UFUNCTION(Category = "Item")
-	FORCEINLINE float GetItemSingleWeight() const { return DataReference->Weight; }
-	
-	UFUNCTION(Category = "Item")
-	FORCEINLINE bool IsFullStack() const { return Quantity == DataReference->MaxStackSize; }
+	FORCEINLINE float GetSingleWeight() const { return DataReference->Weight; }
 
+	UFUNCTION(Category = "Item")
+	FORCEINLINE int32 GetMaxSize() const { return DataReference->MaxStackSize; }
+
+	UFUNCTION(Category = "Item")
+	FORCEINLINE int32 GetEmptySize() const { return DataReference->MaxStackSize - Quantity; }
+		
+	UFUNCTION(Category = "Item")
+	FORCEINLINE bool IsFullStack() const { return IsStackable() ? (Quantity >= DataReference->MaxStackSize) : (Quantity > 0); }
+
+	UFUNCTION(Category = "Item")
 	FORCEINLINE bool IsStackable() const { return DataReference->bIsStackable; }
-	
+
+	UFUNCTION(Category = "Item")
+	FORCEINLINE bool IsEmpty() const { return Quantity == 0; }
+
+	/* 아이템의 수량을 설정하고, 수량이 0이 되면 아이템을 제거 */
 	UFUNCTION(Category = "Item")
 	void SetQuantity(const int32 NewQuantity);
 

@@ -7,7 +7,7 @@
 #include "Interfaces/Interface_Interaction.h"
 #include "ItemActor.generated.h"
 
-class UItemBase;
+class UItemStackBase;
 
 UCLASS()
 class RPG_API AItemActor : public AActor, public IInterface_Interaction
@@ -22,9 +22,9 @@ protected:
 	TObjectPtr<UStaticMeshComponent> PickupMesh;
 	
 	UPROPERTY()
-	TObjectPtr<UItemBase> ItemReference;
+	TObjectPtr<UItemStackBase> ItemReference;
 	
-	UPROPERTY(EditAnywhere, Category = "Pickup | Item")
+	UPROPERTY(EditAnywhere, Category = "Pickup | Item", meta = (ClampMin = 1))
 	int32 Quantity;
 	
 	UPROPERTY(EditAnywhere, Category = "Pickup | Item")
@@ -42,7 +42,7 @@ public:
 	AItemActor();
 
 	void InitializePickup();
-	void InitializeDrop(const TObjectPtr<UItemBase>& DropItem, int32 InQuantity);
+	void InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int32 InQuantity);
 	
 	virtual void BeginFocus() override;
 	virtual void EndFocus() override;

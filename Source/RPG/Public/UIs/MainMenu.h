@@ -17,11 +17,12 @@ class RPG_API UMainMenu : public UUserWidget
 
 protected:
 	virtual void NativeOnInitialized() override;
+	virtual void SynchronizeProperties() override;
 	virtual void NativeConstruct() override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
 		UDragDropOperation* InOperation) override;
 
 public:
 	UPROPERTY()
-	TObjectPtr<ARPGCharacter> InteractionCharacter;
+	TObjectPtr<ARPGCharacter> PlayerCharacter;
 };

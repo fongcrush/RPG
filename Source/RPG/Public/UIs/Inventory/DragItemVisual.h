@@ -9,7 +9,7 @@
 
 class UTextBlock;
 class UImage;
-class UItemBase;
+class UItemStackBase;
 
 /**
  * 
@@ -19,7 +19,7 @@ class RPG_API UDragItemVisual : public UUserWidget
 {
 	GENERATED_BODY()
 
-protected:
+public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> ItemIcon;
 
@@ -27,5 +27,5 @@ protected:
 	TObjectPtr<UTextBlock> ItemQuantity;
 	
 	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
-	TObjectPtr<UItemBase> ItemReference;
+	TObjectPtr<UItemStackBase> ItemReference;
 };

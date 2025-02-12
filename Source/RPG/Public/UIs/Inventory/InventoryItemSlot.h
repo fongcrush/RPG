@@ -12,7 +12,7 @@ class UImage;
 class UBorder;
 class UInventoryTooltip;
 class UDragItemVisual;
-class UItemBase;
+class UItemStackBase;
 /**
  * 인벤토리의 각 아이템 항목(칸)을 나타내는 위젯 클래스
  */
@@ -22,8 +22,8 @@ class RPG_API UInventoryItemSlot : public UUserWidget, public IUserObjectListEnt
 	GENERATED_BODY()
 	
 public:
-	FORCEINLINE void SetItemReference(UItemBase* ItemIn) { ItemReference = ItemIn; }
-	FORCEINLINE TObjectPtr<UItemBase> GetItemReference() const { return ItemReference; }
+	FORCEINLINE void SetItemReference(UItemStackBase* ItemIn) { ItemReference = ItemIn; }
+	FORCEINLINE TObjectPtr<UItemStackBase> GetItemReference() const { return ItemReference; }
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -45,7 +45,7 @@ protected:
 	TSubclassOf<UDragItemVisual> DragItemVisualClass;
 	
 	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
-	TObjectPtr<UItemBase> ItemReference;
+	TObjectPtr<UItemStackBase> ItemReference;
 	
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS

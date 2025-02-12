@@ -5,7 +5,7 @@
 
 #include "Components/InventoryComponent.h"
 #include "Framework/RPGCharacter.h"
-#include "Items/ItemBase.h"
+#include "Items/ItemStackBase.h"
 #include "UIs/RPGHUD.h"
 
 AItemActor::AItemActor()
@@ -30,7 +30,7 @@ void AItemActor::InitializePickup()
 {
 	if (FItemDataBase* ItemData = ItemDataHandle.GetRow<FItemDataBase>(GetName()))
 	{
-		ItemReference = NewObject<UItemBase>(this);
+		ItemReference = NewObject<UItemStackBase>(this);
 		ItemReference->DataReference = ItemData;
 		ItemReference->SetQuantity(Quantity);
 
@@ -41,14 +41,13 @@ void AItemActor::InitializePickup()
 }
 
 
-void AItemActor::InitializeDrop(const TObjectPtr<UItemBase>& DropItem, int32 InQuantity)
+void AItemActor::InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int32 InQuantity)
 {
 	// TODO: 수정 필요
 	ItemReference = DropItem;
 	
 	DropItem->Quantity <= 0 ? ItemReference->SetQuantity(1) : ItemReference->SetQuantity(InQuantity);
-	ItemReference->GetDataReference()->Weight = DropItem->GetItemSingleWeight();
-	ItemReference->OwingInventory = nullptr;
+	ItemReference->GetDataReference()->Weight = DropItem->GetSingleWeight();
 	PickupMesh->SetStaticMesh(DropItem->GetDataReference()->AssetData.Mesh);
 
 	UpdateInteractableData();
@@ -99,9 +98,9 @@ void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 		}
 		
 		// TODO: 플레이어 인벤토리에 아이템 추가 및 조정
-		if (const TObjectPtr<UInventoryComponent> PlayerInventory = Taker->GetInventory())
+		if (const TObjectPtr<UInventoryComponent> Inventory = Taker->GetInventory())
 		{
-			const FItemAddResult AddResult = PlayerInventory->HandleAddItem(ItemReference);
+			const FItemAddResult AddResult = Inventory->HandleAddItem(ItemReference);
 
 			switch (AddResult.OperationResult)
 			{

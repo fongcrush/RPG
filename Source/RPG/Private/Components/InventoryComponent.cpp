@@ -3,7 +3,8 @@
 
 #include "Components/InventoryComponent.h"
 
-#include "Items/ItemBase.h"
+#include "Items/ItemStackBase.h"
+#include "RPG/RPG.h"
 
 
 UInventoryComponent::UInventoryComponent()
@@ -18,7 +19,7 @@ void UInventoryComponent::BeginPlay()
 	
 }
 
-UItemBase* UInventoryComponent::FindMatchingItem(UItemBase* Item) const
+UItemStackBase* UInventoryComponent::FindItemStack(UItemStackBase* Item) const
 {
 	if (InventoryContents.Contains(Item) && Item)
 	{
@@ -26,143 +27,162 @@ UItemBase* UInventoryComponent::FindMatchingItem(UItemBase* Item) const
 	}
 	return nullptr;
 }
-
-UItemBase* UInventoryComponent::FindNextItemByID(UItemBase* Item) const
+ 
+UItemStackBase* UInventoryComponent::FindNoneFullStack(UItemStackBase* Item) const
 {
-	if (Item)
-	{
-		if (const TArray<TObjectPtr<UItemBase>>::ElementType* Result = InventoryContents.FindByKey(Item))
+	if (const TObjectPtr<UItemStackBase>* Result = InventoryContents.FindByPredicate([&Item](const TObjectPtr<UItemStackBase>& InventoryItem)
 		{
-			return *Result;
-		}
-	}
-	return nullptr;
-}
-
-UItemBase* UInventoryComponent::FindNextPartialStack(UItemBase* Item) const
-{
-	if (const TArray<TObjectPtr<UItemBase>>::ElementType* Result = InventoryContents.FindByPredicate([&Item](const UItemBase* InventoryItem)
-		{
-			return (InventoryItem->GetDataReference() == Item->GetDataReference()) && !InventoryItem->IsFullStack();
+			return (!InventoryItem->IsFullStack()) && (Item->GetDataReference() == InventoryItem->GetDataReference());
 		}))
 	{
 		return *Result;
-	}
+	}	
 	return nullptr;
 }
 
-int32 UInventoryComponent::CalculateQuantityCanAdd(const TObjectPtr<UItemBase>& Item, const int32 Quantity) const
-{
-	const int32 MaxQuantity = FMath::FloorToInt((WeightCapacity - TotalWeight) / Item->GetItemSingleWeight());
-	if (Quantity <= MaxQuantity)
-	{
-		return Quantity;
-	}
-	return Quantity;
-}
-
-int32 UInventoryComponent::CalculateQuantityForFull(const TObjectPtr<UItemBase>& Item, const int32 Quantity) const
-{
-	const int32 LeftQuantityForFull = Item->GetDataReference()->MaxStackSize - Item->Quantity;
-	return FMath::Min(Quantity, LeftQuantityForFull);
-}
-
-void UInventoryComponent::RemoveSingleStack(UItemBase* Item)
+void UInventoryComponent::RemoveStack(UItemStackBase* Item)
 {
 	InventoryContents.RemoveSingle(Item);
-	OnInventoryChanged.Broadcast();
-}
-
-int32 UInventoryComponent::RemoveMultipleStack(UItemBase* Item, const int32 Quantity)
-{
-	const int32 ActualQuantityRemove = FMath::Min(Quantity, Item->Quantity);
-	Item->SetQuantity(Item->Quantity - ActualQuantityRemove);
-	TotalWeight -= ActualQuantityRemove * Item->GetItemSingleWeight();
+	TotalWeight -= Item->GetStackWeight();
 	
 	OnInventoryChanged.Broadcast();
-	
-	return ActualQuantityRemove;
 }
 
-void UInventoryComponent::SplitExistingStack(UItemBase* Item, const int32 Quantity)
+int32 UInventoryComponent::RemoveStackQuantity(UItemStackBase* Item, const int32 RequestedQuantity)
 {
-	RemoveMultipleStack(Item, Quantity);
-	AddNewItem(Item, Quantity);
-}
-
-FItemAddResult UInventoryComponent::HandleNoneStackableItems(const TObjectPtr<UItemBase>& Item, const int32 Quantity)
-{
-	// 가방 용량 초과인지 확인
-	if (TotalWeight + Item->GetItemStackWeight() > WeightCapacity)
+	if (RequestedQuantity <= 0 || !Item)
 	{
-		return FItemAddResult::AddedNone(FText::Format(
-			FText::FromString(TEXT("인벤토리에 {0}를 추가할수 없습니다. 중량이 초과됩니다.")),Item->GetDataReference()->Name));
+		return 0;
 	}
-
-	AddNewItem(Item, Quantity);
-	return FItemAddResult::AddedAll(1, FText::Format(
-			FText::FromString(TEXT("인벤토리에 {0} 를 추가했습니다.")),Item->GetDataReference()->Name));
+		
+	const int32 QuantityToRemove = FMath::Min(RequestedQuantity, Item->Quantity);
+	Item->SetQuantity(Item->Quantity - QuantityToRemove);
+	
+	if (Item->IsEmpty())
+	{
+		InventoryContents.RemoveSingle(Item);
+	}
+	
+	TotalWeight -= QuantityToRemove * Item->GetSingleWeight();
+	
+	OnInventoryChanged.Broadcast();
+	
+	return QuantityToRemove;
 }
 
-int32 UInventoryComponent::HandleStackableItems(const TObjectPtr<UItemBase>& Item, const int32 Quantity)
+void UInventoryComponent::SplitStack(UItemStackBase* Item, const int32 Quantity)
 {
-	return 0;
+	RemoveStackQuantity(Item, Quantity);
+	AddNewStack(Item, Quantity);
 }
 
-FItemAddResult UInventoryComponent::HandleAddItem(UItemBase* Item)
+FItemAddResult UInventoryComponent::HandleAddItem(UItemStackBase* Item)
 {
 	if (GetOwner())
 	{
-		const int32 RequestedAddQuantity = Item->Quantity;
-		if (!Item->GetDataReference()->bIsStackable)
-		{
-			return HandleNoneStackableItems(Item, RequestedAddQuantity);
-		}
-
-		const int32 StackableQuantityAdded = HandleStackableItems(Item, Item->Quantity);
-		if (StackableQuantityAdded == RequestedAddQuantity)
-		{
-			return FItemAddResult::AddedAll(RequestedAddQuantity, FText::Format(
-				FText::FromString(TEXT("인벤토리에 {0} {1}를 추가했습니다.")), RequestedAddQuantity,Item->GetDataReference()->Name));
-		}
-
-		if (StackableQuantityAdded < RequestedAddQuantity && StackableQuantityAdded > 0)
-		{
-			return FItemAddResult::AddedPartial(RequestedAddQuantity, FText::Format(
-				FText::FromString(TEXT("인벤토리에 {0} {1}를 추가했습니다.")), RequestedAddQuantity,Item->GetDataReference()->Name));
-		}
-
-		if (StackableQuantityAdded <= 0)
+		const int32& RequestedQuantity = Item->Quantity;
+		if (RequestedQuantity <= 0)
 		{
 			return FItemAddResult::AddedNone(FText::Format(
 				FText::FromString(TEXT("인벤토리에 {0}를 추가할수 없습니다. 잘못된 수량입니다.")),Item->GetDataReference()->Name));
 		}
+		
+		// 쌓을 수 (있는 / 없는) 아이템 처리
+		if (Item->IsStackable())
+		{
+			return HandleAddStackable(Item, RequestedQuantity);
+		}
+		return HandleAddNoneStackable(Item);
+
 	}
 
 	return FItemAddResult::AddedNone(FText::FromString(TEXT("인벤토리에 아이템을 추가할수 없습니다.")));
 }
 
-void UInventoryComponent::AddNewItem(const TObjectPtr<UItemBase>& Item, int32 Quantity)
+FItemAddResult UInventoryComponent::HandleAddStackable(const TObjectPtr<UItemStackBase>& Item, const int32 RequestedQuantity)
 {
-	UItemBase* NewItem;
-
-	// TODO: 아직 정확히 모르겠으니 다 하고 확인하기
-	if (Item->bIsCopy || Item->bIsPickup)
+	const int32 QuantityCanAdd = GetItemQuantityCanAdd(Item, RequestedQuantity);
+	const int32 LeftQuantity = RequestedQuantity > QuantityCanAdd ? RequestedQuantity - QuantityCanAdd : 0;
+	
+	int32 Quantity = QuantityCanAdd;
+	while (Quantity)
 	{
-		// 이미 월드에 존재하거나 복사본일 때
-		NewItem = Item;
-		NewItem->ResetItemFlags();
+		// 자리가 남은 기존 스택이 있음 / 없음
+		if (UItemStackBase* ExistingItem = FindNoneFullStack(Item))
+		{
+			const int32 QuantityToAdd = FMath::Min(ExistingItem->GetEmptySize(), Quantity);
+			ExistingItem->SetQuantity(ExistingItem->Quantity + QuantityToAdd);
+			Quantity -= QuantityToAdd;
+			
+			OnInventoryChanged.Broadcast();
+		}
+		else
+		{
+			const int32 QuantityToAdd = FMath::Min(Item->GetMaxSize(), Quantity);
+			AddNewStack(Item, QuantityToAdd);
+			Quantity -= QuantityToAdd;
+		}
 	}
-	else
+	
+	if (LeftQuantity > 0)
 	{
-		// 아이템을 일부 옮겨 담거나 나눌 때
-		NewItem = Item->CreateCopy();
+		Item->SetQuantity(LeftQuantity);
 	}
 
-	NewItem->OwingInventory = this;
+	// 추가 결과 반환
+	if (QuantityCanAdd == RequestedQuantity)
+	{
+		return FItemAddResult::AddedAll(RequestedQuantity, FText::Format(FText::FromString(
+			TEXT("인벤토리에 {0}를 {1}개 추가했습니다.")), Item->GetDataReference()->Name, RequestedQuantity));
+	}
+
+	if (QuantityCanAdd < RequestedQuantity && QuantityCanAdd > 0)
+	{
+		return FItemAddResult::AddedPartial(RequestedQuantity, FText::Format(FText::FromString(
+			TEXT("인벤토리에 {0}를 {1}개 중 {2}개 추가했습니다.")), Item->GetDataReference()->Name, RequestedQuantity, QuantityCanAdd));
+	}
+
+	if (QuantityCanAdd <= 0)
+	{
+		return FItemAddResult::AddedNone(FText::Format(FText::FromString(
+			TEXT("인벤토리에 {0}를 추가할수 없습니다. 중량 한도를 초과합니다.")),Item->GetDataReference()->Name));
+	}
+
+	return FItemAddResult::AddedNone(FText::Format(FText::FromString(
+			TEXT("인벤토리에 {0}를 추가할수 없습니다. 알 수 없는 에러 입니다.")),Item->GetDataReference()->Name));
+}
+
+FItemAddResult UInventoryComponent::HandleAddNoneStackable(const TObjectPtr<UItemStackBase>& Item)
+{
+	// 가방 용량 초과인지 확인
+	if (TotalWeight + Item->GetStackWeight() > WeightCapacity)
+	{
+		return FItemAddResult::AddedNone(FText::Format(FText::FromString(
+			TEXT("인벤토리에 {0}를 추가할수 없습니다. 중량 한도를 초과합니다.")),Item->GetDataReference()->Name));
+	}
+
+	AddNewStack(Item, 1);
+	
+	return FItemAddResult::AddedAll(1, FText::Format(FText::FromString(
+		TEXT("인벤토리에 {0} 를 추가했습니다.")),Item->GetDataReference()->Name));
+}
+
+void UInventoryComponent::AddNewStack(const TObjectPtr<UItemStackBase>& Item, const int32 Quantity)
+{
+	UItemStackBase* NewItem = Item->CreateCopy();
+
+	NewItem->OwningInventory = this;
 	NewItem->SetQuantity(Quantity);
-
 	InventoryContents.Add(NewItem);
-	TotalWeight += NewItem->GetItemStackWeight();
+	
+	TotalWeight += NewItem->GetStackWeight();
+	
 	OnInventoryChanged.Broadcast();
+}
+
+
+
+int32 UInventoryComponent::GetItemQuantityCanAdd(const TObjectPtr<UItemStackBase>& Item, const int32 Quantity) const
+{
+	return  FMath::Min(Quantity, FMath::FloorToInt(WeightCapacity - TotalWeight / Item->GetSingleWeight()));
 }

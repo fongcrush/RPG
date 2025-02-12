@@ -22,6 +22,11 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+
+		{
+			"Name": "FongcrushUtilities",
+			"Enabled": true
 		}
 	]
 }

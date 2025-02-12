@@ -7,7 +7,7 @@
 #include "Components/TextBlock.h"
 
 // User Defined
-#include "Items/ItemBase.h"
+#include "Items/ItemStackBase.h"
 #include "UIs/Inventory/InventoryItemSlot.h"
 
 void UInventoryTooltip::NativeConstruct()
@@ -16,12 +16,12 @@ void UInventoryTooltip::NativeConstruct()
 
 	if (SlotBeingHovered)
 	{
-		if (const TObjectPtr<UItemBase>& ItemBeingHovered = SlotBeingHovered->GetItemReference())
+		if (const TObjectPtr<UItemStackBase>& ItemBeingHovered = SlotBeingHovered->GetItemReference())
 		{
 			Name->SetText(ItemBeingHovered->GetItemName());
 			Description->SetText(ItemBeingHovered->GetDataReference()->Description);
 			StackSize->SetText(FText::AsNumber(ItemBeingHovered->Quantity));
-			StackWeight->SetText(FText::AsNumber(ItemBeingHovered->GetItemStackWeight()));
+			StackWeight->SetText(FText::AsNumber(ItemBeingHovered->GetStackWeight()));
 			SellValue->SetText(FText::AsNumber(ItemBeingHovered->GetDataReference()->SellValue));
 
 			switch (ItemBeingHovered->GetDataReference()->Quality)

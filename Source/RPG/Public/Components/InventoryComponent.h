@@ -8,7 +8,7 @@
 
 DECLARE_MULTICAST_DELEGATE(FOnInventoryChanged);
 
-class UItemBase;
+class UItemStackBase;
 
 UENUM(BlueprintType)
 enum class EItemAddResult : uint8
@@ -80,25 +80,22 @@ public:
 	UInventoryComponent();
 
 	UFUNCTION(Category = "Inventory")
-	FItemAddResult HandleAddItem(UItemBase* Item);
+	FItemAddResult HandleAddItem(UItemStackBase* Item);
 
 	UFUNCTION(Category = "Inventory")
-	UItemBase* FindMatchingItem(UItemBase* Item) const;
+	UItemStackBase* FindItemStack(UItemStackBase* Item) const;
 	
 	UFUNCTION(Category = "Inventory")
-	UItemBase* FindNextItemByID(UItemBase* Item) const;
-	
-	UFUNCTION(Category = "Inventory")
-	UItemBase* FindNextPartialStack(UItemBase* Item) const;
+	UItemStackBase* FindNoneFullStack(UItemStackBase* Item) const;
 
 	UFUNCTION(Category = "Inventory")
-	void RemoveSingleStack(UItemBase* Item);
+	void RemoveStack(UItemStackBase* Item);
 	
 	UFUNCTION(Category = "Inventory")
-	int32 RemoveMultipleStack(UItemBase* Item, const int32 Quantity);
+	int32 RemoveStackQuantity(UItemStackBase* Item, const int32 RequestedQuantity);
 	
 	UFUNCTION(Category = "Inventory")
-	void SplitExistingStack(UItemBase* Item, const int32 Quantity);
+	void SplitStack(UItemStackBase* Item, const int32 Quantity);
 
 	// Getter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UFUNCTION(Category = "Inventory")
@@ -108,7 +105,7 @@ public:
 	FORCEINLINE float GetWeightCapacity() const { return WeightCapacity; }
 	
 	UFUNCTION(Category = "Inventory")
-	FORCEINLINE TArray<UItemBase*> GetInventoryContents() const { return InventoryContents;}
+	FORCEINLINE TArray<UItemStackBase*> GetInventoryContents() const { return InventoryContents;}
 	
 	// Setter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
 	UFUNCTION(Category = "Inventory")
@@ -119,7 +116,7 @@ protected:
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	TArray<TObjectPtr<UItemBase>> InventoryContents;
+	TArray<TObjectPtr<UItemStackBase>> InventoryContents;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	float TotalWeight;
@@ -132,9 +129,9 @@ protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	virtual void BeginPlay() override;
 
-	int32 CalculateQuantityCanAdd(const TObjectPtr<UItemBase>& Item, const int32 Quantity) const;
-	int32 CalculateQuantityForFull(const TObjectPtr<UItemBase>& Item, const int32 Quantity) const;
-	FItemAddResult HandleNoneStackableItems(const TObjectPtr<UItemBase>& Item, const int32 Quantity);
-	int32 HandleStackableItems(const TObjectPtr<UItemBase>& Item, const int32 Quantity);
-	void AddNewItem(const TObjectPtr<UItemBase>& Item, int32 Quantity);
+	FItemAddResult HandleAddNoneStackable(const TObjectPtr<UItemStackBase>& Item);
+	FItemAddResult HandleAddStackable(const TObjectPtr<UItemStackBase>& Item, const int32 RequestedQuantity);
+	void AddNewStack(const TObjectPtr<UItemStackBase>& Item, int32 Quantity);
+	
+	FORCEINLINE int32 GetItemQuantityCanAdd(const TObjectPtr<UItemStackBase>& Item, int32 Quantity) const;
 };

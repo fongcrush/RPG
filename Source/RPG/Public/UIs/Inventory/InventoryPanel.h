@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UIs/MovingUserWidget.h"
 #include "InventoryPanel.generated.h"
 
 
+class UUniformGridPanel;
 class UInventoryItemSlot;
 class UInventoryComponent;
 class ARPGCharacter;
@@ -16,7 +17,7 @@ class UWrapBox;
  * 
  */
 UCLASS()
-class RPG_API UInventoryPanel : public UUserWidget
+class RPG_API UInventoryPanel : public UMovingUserWidget
 {
 	GENERATED_BODY()
 
@@ -25,22 +26,32 @@ public:
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UWrapBox> InventoryPanel;
+	TObjectPtr<UUniformGridPanel> InventoryPanel;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> CurrentWeightInfo;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> CapacityInfo;
+	
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+	TSubclassOf<UInventoryItemSlot> InventorySlotClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+	int32 SlotColumnSize;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+	int32 SlotRowSize;
+	
 	UPROPERTY()
 	TObjectPtr<ARPGCharacter> PlayerCharacter;
 
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> Inventory;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UInventoryItemSlot> InventorySlotClass;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<UInventoryItemSlot>> InventorySlots;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
@@ -52,9 +63,12 @@ protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	
 	virtual void NativeOnInitialized() override;
-	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-		UDragDropOperation* InOperation) override;
+	virtual void SynchronizeProperties() override;
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+
+	void MakeSlots();
 	
 	void SetInfoText() const;
 };
