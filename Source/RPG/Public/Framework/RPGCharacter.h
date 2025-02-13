@@ -51,7 +51,7 @@ public:
 
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera;}
 
-	FORCEINLINE UInventoryComponent* GetInventory() const { return PlayerInventory; }
+	FORCEINLINE UInventoryComponent* GetInventory() const { return Inventory; }
 	
 	FORCEINLINE bool IsInteracting() const { return GetWorldTimerManager().IsTimerActive(InteractionTimerHandle);}
 
@@ -78,7 +78,7 @@ protected:
 	TObjectPtr<UCameraComponent> FollowCamera;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Character | Inventory")
-	TObjectPtr<UInventoryComponent> PlayerInventory;
+	TObjectPtr<UInventoryComponent> Inventory;
 
 	UPROPERTY(VisibleAnywhere, Category = "Character | Interaction")
 	TScriptInterface<IInterface_Interaction> TargetInteractable;
@@ -109,7 +109,6 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> UIToggleAction;
-	
 	
 #pragma endregion
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓

@@ -90,49 +90,49 @@ struct FItemDataBase : public FTableRowBase
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
-	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override
-	{
-		FName NewRawName = *(UEnum::GetDisplayValueAsText(Type).ToString()
-			+ TEXT("_") + UEnum::GetDisplayValueAsText(Quality).ToString()
-			+ TEXT("_") + Name.ToString());
-		NewRawName.SetNumber(1);
-
-		while (InDataTable->FindRowUnchecked(NewRawName))
-		{
-			NewRawName.SetNumber(NewRawName.GetNumber() + 1);
-		}
-
-		if (InRowName != NewRawName)
-		{
-			FDataTableEditorUtils::RenameRow(const_cast<UDataTable*>(InDataTable), InRowName, NewRawName);
-			FDataTableEditorUtils::SelectRow(InDataTable, NewRawName);
-			if (OnRowNameChanged.IsBound())
-			{
-				OnRowNameChanged.Broadcast(NewRawName);
-			}
-		}
-	}
-
-	virtual void OnPostDataImport(const UDataTable* InDataTable, const FName InRowName, TArray<FString>& OutProblems) override
-	{
-		FName NewRawName = *(UEnum::GetDisplayValueAsText(Type).ToString()
-			+ TEXT("_") + UEnum::GetDisplayValueAsText(Quality).ToString()
-			+ TEXT("_") + Name.ToString());
-		NewRawName.SetNumber(1);
-
-		while (InDataTable->FindRowUnchecked(NewRawName))
-		{
-			NewRawName.SetNumber(NewRawName.GetNumber());
-		}
-
-		if (InRowName != NewRawName)
-		{
-			FDataTableEditorUtils::RenameRow(const_cast<UDataTable*>(InDataTable), InRowName, NewRawName);
-			FDataTableEditorUtils::SelectRow(InDataTable, NewRawName);
-			if (OnRowNameChanged.IsBound())
-			{
-				OnRowNameChanged.Broadcast(NewRawName);
-			}
-		}
-	}
+	// virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override
+	// {
+	// 	FName NewRawName = *(UEnum::GetDisplayValueAsText(Type).ToString()
+	// 		+ TEXT("_") + UEnum::GetDisplayValueAsText(Quality).ToString()
+	// 		+ TEXT("_") + Name.ToString());
+	// 	NewRawName.SetNumber(1);
+	//
+	// 	while (InDataTable->FindRowUnchecked(NewRawName))
+	// 	{
+	// 		NewRawName.SetNumber(NewRawName.GetNumber() + 1);
+	// 	}
+	//
+	// 	if (InRowName != NewRawName)
+	// 	{
+	// 		FDataTableEditorUtils::RenameRow(const_cast<UDataTable*>(InDataTable), InRowName, NewRawName);
+	// 		FDataTableEditorUtils::SelectRow(InDataTable, NewRawName);
+	// 		if (OnRowNameChanged.IsBound())
+	// 		{
+	// 			OnRowNameChanged.Broadcast(NewRawName);
+	// 		}
+	// 	}
+	// }
+	//
+	// virtual void OnPostDataImport(const UDataTable* InDataTable, const FName InRowName, TArray<FString>& OutProblems) override
+	// {
+	// 	FName NewRawName = *(UEnum::GetDisplayValueAsText(Type).ToString()
+	// 		+ TEXT("_") + UEnum::GetDisplayValueAsText(Quality).ToString()
+	// 		+ TEXT("_") + Name.ToString());
+	// 	NewRawName.SetNumber(1);
+	//
+	// 	while (InDataTable->FindRowUnchecked(NewRawName))
+	// 	{
+	// 		NewRawName.SetNumber(NewRawName.GetNumber());
+	// 	}
+	//
+	// 	if (InRowName != NewRawName)
+	// 	{
+	// 		FDataTableEditorUtils::RenameRow(const_cast<UDataTable*>(InDataTable), InRowName, NewRawName);
+	// 		FDataTableEditorUtils::SelectRow(InDataTable, NewRawName);
+	// 		if (OnRowNameChanged.IsBound())
+	// 		{
+	// 			OnRowNameChanged.Broadcast(NewRawName);
+	// 		}
+	// 	}
+	// }
 };

@@ -51,8 +51,8 @@ ARPGCharacter::ARPGCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	PlayerInventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("PlayerInventory"));
-	PlayerInventory->SetWeightCapacity(200.f);
+	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("PlayerInventory"));
+	Inventory->SetWeightCapacity(200.f);
 
 	InteractionCheckFrequency = 0.1f;
 	InteractionCheckDistance = 175.f;
@@ -110,7 +110,7 @@ void ARPGCharacter::UpdateInteractionWidget() const
 
 void ARPGCharacter::DropItem(UItemStackBase* ItemToDrop, const int32 Quantity)
 {
-	if (PlayerInventory->FindItemStack(ItemToDrop))
+	if (Inventory->Contains(ItemToDrop))
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
@@ -120,7 +120,7 @@ void ARPGCharacter::DropItem(UItemStackBase* ItemToDrop, const int32 Quantity)
 		const FVector SpawnLocation(GetActorLocation() + (GetActorForwardVector() * 50.f) + FVector(0.f, 0.f, 50.f));
 		const FTransform SpawnTransform(GetActorRotation(), SpawnLocation);
 
-		const int32 RemovedQuantity = PlayerInventory->RemoveStackQuantity(ItemToDrop, Quantity);
+		const int32 RemovedQuantity = Inventory->RemoveStackQuantity(ItemToDrop, Quantity);
 		
 		AItemActor* ItemActor = GetWorld()->SpawnActor<AItemActor>(AItemActor::StaticClass(), SpawnTransform, SpawnParams);
 

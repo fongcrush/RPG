@@ -6,9 +6,18 @@
 #include "Components/ActorComponent.h"
 #include "InventoryComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnInventoryChanged);
-
+class UInventoryWidget;
+class UItemSlotWidget;
 class UItemStackBase;
+
+UENUM(BlueprintType)
+enum class EInventoryType : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Player UMETA(DisplayName = "Player"),
+	Storage UMETA(DisplayName = "Storage"),
+	Shop UMETA(DisplayName = "Shop")
+};
 
 UENUM(BlueprintType)
 enum class EItemAddResult : uint8
@@ -72,8 +81,35 @@ class RPG_API UInventoryComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	FOnInventoryChanged OnInventoryChanged;
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	VARIABLES & PROPERTIES
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+	EInventoryType Type;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+	
+protected:
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	VARIABLES & PROPERTIES
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	float WeightCapacity;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
+	float Weight;
+	
+	UPROPERTY()
+	TObjectPtr<UInventoryWidget> InventoryWidget;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
+	TMap<TObjectPtr<UItemStackBase>,TObjectPtr<UItemSlotWidget>> InventoryMap;
+	
+	TArray<int32> FilledSlots;
+	TArray<int32> EmptySlots;
+
+public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -83,13 +119,7 @@ public:
 	FItemAddResult HandleAddItem(UItemStackBase* Item);
 
 	UFUNCTION(Category = "Inventory")
-	UItemStackBase* FindItemStack(UItemStackBase* Item) const;
-	
-	UFUNCTION(Category = "Inventory")
-	UItemStackBase* FindNoneFullStack(UItemStackBase* Item) const;
-
-	UFUNCTION(Category = "Inventory")
-	void RemoveStack(UItemStackBase* Item);
+	void RemoveStack(UItemStackBase* ItemStack);
 	
 	UFUNCTION(Category = "Inventory")
 	int32 RemoveStackQuantity(UItemStackBase* Item, const int32 RequestedQuantity);
@@ -99,39 +129,36 @@ public:
 
 	// Getter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UFUNCTION(Category = "Inventory")
-	FORCEINLINE float GetTotalWeight() const { return TotalWeight; }
+	FORCEINLINE float GetTotalWeight() const { return Weight; }
 	
 	UFUNCTION(Category = "Inventory")
 	FORCEINLINE float GetWeightCapacity() const { return WeightCapacity; }
 	
 	UFUNCTION(Category = "Inventory")
-	FORCEINLINE TArray<UItemStackBase*> GetInventoryContents() const { return InventoryContents;}
+	FORCEINLINE TArray<UItemStackBase*> GetContents() const;
 	
 	// Setter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
 	UFUNCTION(Category = "Inventory")
 	FORCEINLINE void SetWeightCapacity(const float NewWeightCapacity) { WeightCapacity = NewWeightCapacity; }
 	
+	FORCEINLINE bool Contains(const TObjectPtr<UItemStackBase>& ItemStack) const { return InventoryMap.Contains(ItemStack); };
+
 protected:
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	VARIABLES & PROPERTIES
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	TArray<TObjectPtr<UItemStackBase>> InventoryContents;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	float TotalWeight;
-	
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	float WeightCapacity;
-	
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	virtual void BeginPlay() override;
 
+	void Register();
+	void RegisterSlots();
+
 	FItemAddResult HandleAddNoneStackable(const TObjectPtr<UItemStackBase>& Item);
-	FItemAddResult HandleAddStackable(const TObjectPtr<UItemStackBase>& Item, const int32 RequestedQuantity);
-	void AddNewStack(const TObjectPtr<UItemStackBase>& Item, int32 Quantity);
+	FItemAddResult HandleAddStackable(const TObjectPtr<UItemStackBase>& ItemStack, const int32 RequestedQuantity);
+	void AddNewStack(const TObjectPtr<UItemStackBase>& ItemStack, int32 Quantity);
+	void SetWeight(const float& InWeight);
 	
-	FORCEINLINE int32 GetItemQuantityCanAdd(const TObjectPtr<UItemStackBase>& Item, int32 Quantity) const;
+	FORCEINLINE int32 GetItemQuantityCanAdd(const TObjectPtr<UItemStackBase>& Item, int32 Quantity) const;	
+	FORCEINLINE UItemSlotWidget* FindSlot(const TObjectPtr<UItemStackBase>& ItemStack) const { return *InventoryMap.Find(ItemStack); }
+	FORCEINLINE UItemStackBase* FindNoneFullStack(const UItemStackBase* ItemStack) const;
+
 };

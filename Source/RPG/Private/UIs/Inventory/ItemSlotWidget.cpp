@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UIs/Inventory/InventoryItemSlot.h"
+#include "UIs/Inventory/ItemSlotWidget.h"
 
 // UE
 #include "Components/Border.h"
@@ -9,14 +9,13 @@
 #include "Components/TextBlock.h"
 
 // User Defined
-#include "Components/TileView.h"
 #include "Items/ItemStackBase.h"
 #include "UIs/Inventory/DragItemVisual.h"
 #include "UIs/Inventory/InventoryTooltip.h"
 #include "UIs/Inventory/ItemDragDropOperation.h"
 
 
-void UInventoryItemSlot::NativeOnInitialized()
+void UItemSlotWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 	if (TooltipClass)
@@ -25,12 +24,24 @@ void UInventoryItemSlot::NativeOnInitialized()
 		Tooltip->SlotBeingHovered = this;
 		SetToolTip(Tooltip);
 	}
+	Reset();
 }
 
-void UInventoryItemSlot::NativeConstruct()
+void UItemSlotWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+}
 
+void UItemSlotWidget::Reset()
+{
+	ItemReference = nullptr;;
+	ItemBorder->Background.OutlineSettings.Color = FLinearColor::White;
+	ItemIcon->SetColorAndOpacity(FLinearColor::Transparent);
+	QuantityText->SetText(FText::GetEmpty());
+}
+
+void UItemSlotWidget::Refresh()
+{
 	if (ItemReference)
 	{
 		switch (ItemReference->GetDataReference()->Quality)
@@ -56,16 +67,16 @@ void UInventoryItemSlot::NativeConstruct()
 
 		if (ItemReference->GetDataReference()->bIsStackable)
 		{
-			ItemQuantity->SetText(FText::FText::AsNumber(ItemReference->Quantity));
+			QuantityText->SetText(FText::FText::AsNumber(ItemReference->Quantity));
 		}
 		else
 		{
-			ItemQuantity->SetVisibility(ESlateVisibility::Collapsed);
+			QuantityText->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 }
 
-FReply UInventoryItemSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+FReply UItemSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 
@@ -77,12 +88,12 @@ FReply UInventoryItemSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, 
 	return Reply;
 }
 
-void UInventoryItemSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+void UItemSlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseLeave(InMouseEvent);
 }
 
-void UInventoryItemSlot::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+void UItemSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
@@ -104,7 +115,7 @@ void UInventoryItemSlot::NativeOnDragDetected(const FGeometry& InGeometry, const
 	}
 }
 
-bool UInventoryItemSlot::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+bool UItemSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
 {
 	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 }

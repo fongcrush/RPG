@@ -91,7 +91,7 @@ void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 {
 	if (!IsPendingKillPending())
 	{
-		if (ItemReference.IsNull())
+		if (ItemReference == nullptr)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("인벤토리 속 아이템 참조가 null 입니다"));
 			return;

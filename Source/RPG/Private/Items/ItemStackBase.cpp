@@ -13,7 +13,6 @@ UItemStackBase* UItemStackBase::CreateCopy()
 	NewItem->OwningInventory = OwningInventory;
 	NewItem->DataReference = DataReference;
 	NewItem->Quantity = Quantity;;
-	NewItem->bIsCopy = true;
 
 	return NewItem;
 }

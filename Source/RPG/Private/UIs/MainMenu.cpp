@@ -4,9 +4,28 @@
 #include "UIs/MainMenu.h"
 
 #include "Blueprint/WidgetTree.h"
+
+#include "Components/InventoryComponent.h"
 #include "Framework/RPGCharacter.h"
 #include "Items/ItemStackBase.h"
+#include "UIs/Inventory/InventoryWidget.h"
 #include "UIs/Inventory/ItemDragDropOperation.h"
+
+void UMainMenu::InitializeMainInventory()
+{
+	PlayerCharacter = Cast<ARPGCharacter>(GetOwningPlayerPawn());
+	if (PlayerCharacter)
+	{
+		MainInventoryWidget = CreateWidget<UInventoryWidget>(PlayerCharacter, PlayerCharacter->GetInventory()->InventoryWidgetClass);
+		
+	}
+	
+}
+
+void UMainMenu::AddSubInventory(UInventoryWidget* SubInventoryWidget)
+{
+	
+}
 
 void UMainMenu::NativeOnInitialized()
 {
@@ -19,6 +38,7 @@ void UMainMenu::SynchronizeProperties()
 	
 	TArray<UWidget*> ChildWidgets;
 	WidgetTree->GetChildWidgets(this, ChildWidgets);
+	
 	for (UWidget* ChildWidget : ChildWidgets)
 	{
 		ChildWidget->SynchronizeProperties();

@@ -7,7 +7,7 @@
 #include "InventoryTooltip.generated.h"
 
 class UTextBlock;
-class UInventoryItemSlot;
+class UItemSlotWidget;
 /**
  * 
  */
@@ -18,7 +18,7 @@ class RPG_API UInventoryTooltip : public UUserWidget
 	
 public:
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UInventoryItemSlot> SlotBeingHovered;
+	TObjectPtr<UItemSlotWidget> SlotBeingHovered;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> Name;

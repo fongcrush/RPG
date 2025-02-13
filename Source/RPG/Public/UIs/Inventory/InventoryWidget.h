@@ -2,13 +2,21 @@
 
 #pragma once
 
+// UE
 #include "CoreMinimal.h"
+#include "Components/TextBlock.h"
+#include "Components/UniformGridPanel.h"
+
+// User Defined
+#include "ItemSlotWidget.h"
+#include "Items/ItemStackBase.h"
 #include "UIs/MovingUserWidget.h"
-#include "InventoryPanel.generated.h"
+
+#include "InventoryWidget.generated.h"
 
 
 class UUniformGridPanel;
-class UInventoryItemSlot;
+class UItemSlotWidget;
 class UInventoryComponent;
 class ARPGCharacter;
 class UTextBlock;
@@ -17,26 +25,28 @@ class UWrapBox;
  * 
  */
 UCLASS()
-class RPG_API UInventoryPanel : public UMovingUserWidget
+class RPG_API UInventoryWidget : public UMovingUserWidget
 {
 	GENERATED_BODY()
 
-public:
+	friend UInventoryComponent;
+
+protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UUniformGridPanel> InventoryPanel;
 	
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UTextBlock> CurrentWeightInfo;
+	TObjectPtr<UTextBlock> WeightText;
 
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UTextBlock> CapacityInfo;
+	TObjectPtr<UTextBlock> CapacityText;
 	
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
-	TSubclassOf<UInventoryItemSlot> InventorySlotClass;
+	TSubclassOf<UItemSlotWidget> InventorySlotClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
 	int32 SlotColumnSize;
@@ -45,30 +55,15 @@ public:
 	int32 SlotRowSize;
 	
 	UPROPERTY()
-	TObjectPtr<ARPGCharacter> PlayerCharacter;
-
-	UPROPERTY()
-	TObjectPtr<UInventoryComponent> Inventory;
+	TArray<TObjectPtr<UItemSlotWidget>> Slots;
 	
-	UPROPERTY()
-	TArray<TObjectPtr<UInventoryItemSlot>> InventorySlots;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UFUNCTION()
-	void RefreshInventory();
-	
-protected:
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	FUNCTIONS
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	
-	virtual void NativeOnInitialized() override;
 	virtual void SynchronizeProperties() override;
+	virtual void NativeOnInitialized() override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 
 	void MakeSlots();
-	
-	void SetInfoText() const;
 };

@@ -25,8 +25,6 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Item")
 	int32 Quantity;
-	
-	bool bIsCopy, bIsPickup;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
@@ -69,8 +67,9 @@ public:
 	UFUNCTION(Category = "Item")
 	virtual void Use(class ARPGCharacter* Character);
 
-	bool operator==(const FItemDataBase* OtherDataReference) const { return this->DataReference == OtherDataReference; }
-
+	bool operator==(const UItemStackBase* OtherItemStack) const { return this->DataReference == OtherItemStack->DataReference; }
+	bool operator==(const FItemDataBase* OtherItemData) const { return this->DataReference == OtherItemData; }
+	
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES

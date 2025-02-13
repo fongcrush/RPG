@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/IUserObjectListEntry.h"
 #include "Blueprint/UserWidget.h"
-#include "InventoryItemSlot.generated.h"
+#include "ItemSlotWidget.generated.h"
 
 class UTextBlock;
 class UImage;
@@ -17,13 +17,26 @@ class UItemStackBase;
  * 인벤토리의 각 아이템 항목(칸)을 나타내는 위젯 클래스
  */
 UCLASS()
-class RPG_API UInventoryItemSlot : public UUserWidget, public IUserObjectListEntry
+class RPG_API UItemSlotWidget : public UUserWidget, public IUserObjectListEntry
 {
 	GENERATED_BODY()
 	
 public:
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	VARIABLES & PROPERTIES
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
+	int32 Index;
+	
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	FUNCTIONS
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	FORCEINLINE void SetItemReference(UItemStackBase* ItemIn) { ItemReference = ItemIn; }
 	FORCEINLINE TObjectPtr<UItemStackBase> GetItemReference() const { return ItemReference; }
+	virtual void Reset();
+	virtual void Refresh();
+
+	// bool operator<(const UItemSlotWidget& Other) const { return Index < Other.Index; }
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -36,7 +49,8 @@ protected:
 	TObjectPtr<UImage> ItemIcon;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> ItemQuantity;
+	TObjectPtr<UTextBlock> QuantityText;
+	
 	
 	UPROPERTY(EditDefaultsOnly, Category="Inventory Slot", meta=(BlueprintBaseOnly))
 	TSubclassOf<UInventoryTooltip> TooltipClass;

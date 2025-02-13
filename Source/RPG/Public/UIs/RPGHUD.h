@@ -53,6 +53,4 @@ protected:
 	
 	void DisplayMenu();
 	void HideMenu();
-
-public:
 };

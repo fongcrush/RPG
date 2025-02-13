@@ -8,7 +8,7 @@
 
 // User Defined
 #include "Items/ItemStackBase.h"
-#include "UIs/Inventory/InventoryItemSlot.h"
+#include "UIs/Inventory/ItemSlotWidget.h"
 
 void UInventoryTooltip::NativeConstruct()
 {
