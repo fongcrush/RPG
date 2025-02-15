@@ -16,7 +16,7 @@ AItemActor::AItemActor()
 	PickupMesh->SetSimulatePhysics(true);
 	SetRootComponent(PickupMesh);
 	
-	Quantity = 1;
+	Quantity = 1;	
 }
 
 void AItemActor::BeginPlay()
@@ -28,10 +28,10 @@ void AItemActor::BeginPlay()
 
 void AItemActor::InitializePickup()
 {
-	if (FItemDataBase* ItemData = ItemDataHandle.GetRow<FItemDataBase>(GetName()))
+	if (FItemStaticBase* ItemData = ItemDataHandle.GetRow<FItemStaticBase>(GetName()))
 	{
 		ItemReference = NewObject<UItemStackBase>(this);
-		ItemReference->DataReference = ItemData;
+		ItemReference->StaticData = ItemData;
 		ItemReference->SetQuantity(Quantity);
 
 		PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
@@ -47,8 +47,8 @@ void AItemActor::InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int3
 	ItemReference = DropItem;
 	
 	DropItem->Quantity <= 0 ? ItemReference->SetQuantity(1) : ItemReference->SetQuantity(InQuantity);
-	ItemReference->GetDataReference()->Weight = DropItem->GetSingleWeight();
-	PickupMesh->SetStaticMesh(DropItem->GetDataReference()->AssetData.Mesh);
+	ItemReference->GetStaticData()->Weight = DropItem->GetSingleWeight();
+	PickupMesh->SetStaticMesh(DropItem->GetStaticData()->AssetData.Mesh);
 
 	UpdateInteractableData();
 }
@@ -56,14 +56,13 @@ void AItemActor::InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int3
 void AItemActor::UpdateInteractableData()
 {
 	InteractableData.InteractableType = EInteractableType::Pickup;
-	InteractableData.Action = ItemReference->GetDataReference()->InteractionText;
-	InteractableData.Name = ItemReference->GetDataReference()->Name;
+	InteractableData.Action = ItemReference->GetStaticData()->InteractionText;
+	InteractableData.Name = ItemReference->GetStaticData()->Name;
 	InteractableData.Quantity = ItemReference->Quantity;
 }
 
 void AItemActor::BeginFocus()
 {
-	
 	if (PickupMesh)
 	{
 		PickupMesh->SetRenderCustomDepth(true);
@@ -74,7 +73,6 @@ void AItemActor::EndFocus()
 {
 	if (PickupMesh)
 	{
-		
 		PickupMesh->SetRenderCustomDepth(false);
 	}
 }
@@ -134,12 +132,12 @@ void AItemActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 	const FName ChangedPropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.GetPropertyName() : NAME_None;
 	if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(FDataTableRowHandle, RowName))
 	{
-		if (FItemDataBase* ItemData = ItemDataHandle.GetRow<FItemDataBase>(GetName()))
+		if (FItemStaticBase* ItemData = ItemDataHandle.GetRow<FItemStaticBase>(GetName()))
 		{
 			PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
 
 			// DataTable에서 RowName이 변경되어도 Handle이 가리키는 RowName은 바뀌지가 않아서 수동 변경 해줘야 함
-			ItemData->OnRowNameChanged.AddLambda([&](FName RenamedRowName){ ItemDataHandle.RowName = RenamedRowName; });
+			// ItemData->OnRowNameChanged.AddLambda([&](FName RenamedRowName){ ItemDataHandle.RowName = RenamedRowName; });
 		}
 	}
 }

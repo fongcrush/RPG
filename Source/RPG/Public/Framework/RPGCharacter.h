@@ -41,9 +41,7 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 #pragma region public_functions
 	ARPGCharacter();
-	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
 	virtual void Tick(float DeltaTime) override;
 	
 
@@ -60,6 +58,7 @@ public:
 	void DropItem(UItemStackBase* ItemToDrop, const int32 Quantity);
 	
 #pragma endregion
+	
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
@@ -77,10 +76,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FollowCamera;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Character | Inventory")
+	UPROPERTY(VisibleAnywhere, Category = "Character")
 	TObjectPtr<UInventoryComponent> Inventory;
 
-	UPROPERTY(VisibleAnywhere, Category = "Character | Interaction")
+	UPROPERTY(VisibleAnywhere, Category = "Character")
 	TScriptInterface<IInterface_Interaction> TargetInteractable;
 
 	float InteractionCheckFrequency;
@@ -111,11 +110,11 @@ protected:
 	TObjectPtr<UInputAction> UIToggleAction;
 	
 #pragma endregion
+	
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
 #pragma region protected_functions
-	
 	virtual void BeginPlay() override;
 	
 	void PerformInteractionCheck();
@@ -129,5 +128,6 @@ protected:
 	void Look(const FInputActionValue& Value);
 	
 	void ToggleMenu();
+	
 #pragma endregion
 };

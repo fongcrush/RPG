@@ -12,16 +12,6 @@ void UInventoryWidget::SynchronizeProperties()
 	MakeSlots();
 }
 
-void UInventoryWidget::NativeOnInitialized()
-{
-	Super::NativeOnInitialized();
-}
-
-bool UInventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
-{
-	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
-}
-
 void UInventoryWidget::MakeSlots()
 {
 	InventoryPanel->ClearChildren();
@@ -37,4 +27,14 @@ void UInventoryWidget::MakeSlots()
 			Slots.Add(ItemSlot);
 		}
 	}
+}
+
+void UInventoryWidget::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+}
+
+bool UInventoryWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+	return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 }

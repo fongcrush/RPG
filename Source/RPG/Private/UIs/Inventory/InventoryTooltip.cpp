@@ -19,12 +19,12 @@ void UInventoryTooltip::NativeConstruct()
 		if (const TObjectPtr<UItemStackBase>& ItemBeingHovered = SlotBeingHovered->GetItemReference())
 		{
 			Name->SetText(ItemBeingHovered->GetItemName());
-			Description->SetText(ItemBeingHovered->GetDataReference()->Description);
+			Description->SetText(ItemBeingHovered->GetStaticData()->Description);
 			StackSize->SetText(FText::AsNumber(ItemBeingHovered->Quantity));
 			StackWeight->SetText(FText::AsNumber(ItemBeingHovered->GetStackWeight()));
-			SellValue->SetText(FText::AsNumber(ItemBeingHovered->GetDataReference()->SellValue));
+			SellValue->SetText(FText::AsNumber(ItemBeingHovered->GetStaticData()->SellValue));
 
-			switch (ItemBeingHovered->GetDataReference()->Quality)
+			switch (ItemBeingHovered->GetStaticData()->Quality)
 			{
 			case EItemQuality::Normal:
 				Quality->SetText(FText::FromString(TEXT("일반")));
@@ -43,7 +43,7 @@ void UInventoryTooltip::NativeConstruct()
 				break;
 			}
 
-			switch (ItemBeingHovered->GetDataReference()->Type)
+			switch (ItemBeingHovered->GetStaticData()->Type)
 			{
 			case EItemType::Weapon:
 				break;
@@ -61,7 +61,7 @@ void UInventoryTooltip::NativeConstruct()
 				break;
 			}
 
-			if (ItemBeingHovered->GetDataReference()->bIsStackable)
+			if (ItemBeingHovered->GetStaticData()->bIsStackable)
 			{
 				StackSize->SetText(FText::AsNumber(ItemBeingHovered->Quantity));
 			}

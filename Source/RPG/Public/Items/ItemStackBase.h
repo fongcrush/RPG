@@ -6,6 +6,7 @@
 #include "Data/ItemDataStructs.h"
 #include "ItemStackBase.generated.h"
 
+class UItemStackBase;
 class AItemActor;
 class UInventoryComponent;
 
@@ -22,40 +23,44 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UPROPERTY()
 	UInventoryComponent* OwningInventory;
+
+	UPROPERTY(EditDefaultsOnly)
+	FDataTableRowHandle StaticDataHandle;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Item")
+	UPROPERTY(VisibleInstanceOnly)
 	int32 Quantity;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UItemStackBase();
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostInitProperties() override;
+	virtual void PostLoad() override;
+	virtual void Initialize();
 
-	/* DuplicateObject는 UPROPERTY() 선언된 맴버만 복사하므로 수동 복사 */
-	UItemStackBase* CreateCopy();
-
-	FORCEINLINE FItemDataBase* GetDataReference() const { return DataReference; }
+	FORCEINLINE FItemStaticBase* GetStaticData() const { return StaticData; }
 	
 	UFUNCTION(Category = "Item")
-	FORCEINLINE FText GetItemName() const { return DataReference->Name; }
+	FORCEINLINE FText GetItemName() const { return StaticData->Name; }
 	
 	UFUNCTION(Category = "Item")
-	FORCEINLINE float GetStackWeight() const { return Quantity * DataReference->Weight; }
+	FORCEINLINE float GetStackWeight() const { return Quantity * StaticData->Weight; }
 	
 	UFUNCTION(Category = "Item")
-	FORCEINLINE float GetSingleWeight() const { return DataReference->Weight; }
+	FORCEINLINE float GetSingleWeight() const { return StaticData->Weight; }
 
 	UFUNCTION(Category = "Item")
-	FORCEINLINE int32 GetMaxSize() const { return DataReference->MaxStackSize; }
+	FORCEINLINE int32 GetMaxSize() const { return StaticData->MaxStackSize; }
 
 	UFUNCTION(Category = "Item")
-	FORCEINLINE int32 GetEmptySize() const { return DataReference->MaxStackSize - Quantity; }
+	FORCEINLINE int32 GetEmptySize() const { return StaticData->MaxStackSize - Quantity; }
 		
 	UFUNCTION(Category = "Item")
-	FORCEINLINE bool IsFullStack() const { return IsStackable() ? (Quantity >= DataReference->MaxStackSize) : (Quantity > 0); }
+	FORCEINLINE bool IsFullStack() const { return IsStackable() ? (Quantity >= StaticData->MaxStackSize) : (Quantity > 0); }
 
 	UFUNCTION(Category = "Item")
-	FORCEINLINE bool IsStackable() const { return DataReference->bIsStackable; }
+	FORCEINLINE bool IsStackable() const { return StaticData->bIsStackable; }
 
 	UFUNCTION(Category = "Item")
 	FORCEINLINE bool IsEmpty() const { return Quantity == 0; }
@@ -67,12 +72,12 @@ public:
 	UFUNCTION(Category = "Item")
 	virtual void Use(class ARPGCharacter* Character);
 
-	bool operator==(const UItemStackBase* OtherItemStack) const { return this->DataReference == OtherItemStack->DataReference; }
-	bool operator==(const FItemDataBase* OtherItemData) const { return this->DataReference == OtherItemData; }
+	bool operator==(const UItemStackBase* OtherItemStack) const { return this->StaticData == OtherItemStack->StaticData; }
+	bool operator==(const FItemStaticBase* OtherItemData) const { return this->StaticData == OtherItemData; }
 	
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	FItemDataBase* DataReference;
+	FItemStaticBase* StaticData;
 };

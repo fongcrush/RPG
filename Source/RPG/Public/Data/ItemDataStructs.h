@@ -44,47 +44,47 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnRowNameChanged, FName)
 #endif
 
 USTRUCT()
-struct FItemDataBase : public FTableRowBase
+struct FItemStaticBase : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = -1))
 	EItemType Type;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = -1))
 	EItemQuality Quality;
 
-
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = -1))
 	FText Name;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
-	FText Description;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
-	FText InteractionText;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
-	FText UsageText;
-
-
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 10))
 	float Weight;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
-	int32 MaxStackSize;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 10))
 	bool bIsStackable;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 10, EditConditionHides, EditCondition = "bIsStackable"))
+	int32 MaxStackSize;
+
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 10))
 	float SellValue;
 
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item Data", meta = (DisplayPriority = 10))
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 10))
+	FText InteractionText;
+
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 10))
+	FText UsageText;
+
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 10))
+	FText Description;
+
+
+	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 20, ShowOnlyInnerProperties))
 	FItemAssetData AssetData;
 
-	
+
 	FOnRowNameChanged OnRowNameChanged;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -135,4 +135,35 @@ struct FItemDataBase : public FTableRowBase
 	// 		}
 	// 	}
 	// }
+};
+
+USTRUCT()
+struct FBagStaticData : public FItemStaticBase
+{
+	GENERATED_BODY()
+
+	FBagStaticData(): WeightCapacity(100), Width(1), Height(1)
+	{
+		Type = EItemType::Mundane;
+		Quality = EItemQuality::Normal;
+		Weight = 0.0f;
+		bIsStackable = false;
+		MaxStackSize = 1;
+		SellValue = 0.0f;
+		InteractionText = FText::FromString(TEXT("줍기"));
+		UsageText = FText::FromString(TEXT("가방을 엽니다."));
+		Description = FText::FromString(TEXT("가방입니다."));
+	}
+
+	UPROPERTY(EditDefaultsOnly, meta=(ClampMin = 0))
+	float WeightCapacity;	
+
+	UPROPERTY(EditDefaultsOnly, meta=(ClampMin = 1))
+	int32 Width;
+
+	UPROPERTY(EditDefaultsOnly, meta=(ClampMin = 1))
+	int32 Height;
+
+	UPROPERTY(EditDefaultsOnly, meta=(DisplayPriority = 10))
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 };

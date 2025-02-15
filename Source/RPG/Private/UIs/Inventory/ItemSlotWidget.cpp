@@ -44,7 +44,7 @@ void UItemSlotWidget::Refresh()
 {
 	if (ItemReference)
 	{
-		switch (ItemReference->GetDataReference()->Quality)
+		switch (ItemReference->GetStaticData()->Quality)
 		{
 		case EItemQuality::Normal:
 			ItemBorder->Background.OutlineSettings.Color = FLinearColor::White;
@@ -63,9 +63,9 @@ void UItemSlotWidget::Refresh()
 			break;
 		default:;
 		}
-		ItemIcon->SetBrushFromTexture(ItemReference->GetDataReference()->AssetData.Icon);
+		ItemIcon->SetBrushFromTexture(ItemReference->GetStaticData()->AssetData.Icon);
 
-		if (ItemReference->GetDataReference()->bIsStackable)
+		if (ItemReference->GetStaticData()->bIsStackable)
 		{
 			QuantityText->SetText(FText::FText::AsNumber(ItemReference->Quantity));
 		}
@@ -100,7 +100,7 @@ void UItemSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FP
 	if (DragItemVisualClass && ItemReference)
 	{
 		UDragItemVisual* DragVisual = CreateWidget<UDragItemVisual>(this, DragItemVisualClass);
-		DragVisual->ItemIcon->SetBrushFromTexture(ItemReference->GetDataReference()->AssetData.Icon);
+		DragVisual->ItemIcon->SetBrushFromTexture(ItemReference->GetStaticData()->AssetData.Icon);
 		DragVisual->ItemQuantity->SetText(FText::AsNumber(ItemReference->Quantity));
 
 		UItemDragDropOperation* DragItemOperation = NewObject<UItemDragDropOperation>();

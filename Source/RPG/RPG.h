@@ -35,3 +35,9 @@ DECLARE_LOG_CATEGORY_EXTERN(RPG, Log, All);
 	FString OutCallstack = ANSI_TO_TCHAR(StackTrace);\
 	UE_LOG(LogTemp, Warning, TEXT("Call Stack:\n%s"), *OutCallstack);\
 }
+
+template<typename T, typename U>
+T* StructCast(U* Source)
+{
+	return (Source && std::is_base_of<T, U>::value) ? static_cast<T*>(Source) : nullptr;
+}

@@ -15,6 +15,7 @@
 #include "InventoryWidget.generated.h"
 
 
+class UInventory;
 class UUniformGridPanel;
 class UItemSlotWidget;
 class UInventoryComponent;
@@ -30,6 +31,7 @@ class RPG_API UInventoryWidget : public UMovingUserWidget
 	GENERATED_BODY()
 
 	friend UInventoryComponent;
+	friend UInventory;;
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -64,6 +66,5 @@ protected:
 	virtual void SynchronizeProperties() override;
 	virtual void NativeOnInitialized() override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
-
 	void MakeSlots();
 };

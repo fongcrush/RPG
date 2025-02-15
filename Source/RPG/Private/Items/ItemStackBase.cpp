@@ -7,14 +7,31 @@ UItemStackBase::UItemStackBase()
 {
 }
 
-UItemStackBase* UItemStackBase::CreateCopy()
+void UItemStackBase::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	UItemStackBase* NewItem = NewObject<UItemStackBase>(this);
-	NewItem->OwningInventory = OwningInventory;
-	NewItem->DataReference = DataReference;
-	NewItem->Quantity = Quantity;;
+	UObject::PostEditChangeProperty(PropertyChangedEvent);
+	Initialize();
+}
 
-	return NewItem;
+void UItemStackBase::PostInitProperties()
+{
+	UObject::PostInitProperties();
+	Initialize();
+}
+
+void UItemStackBase::PostLoad()
+{
+	UObject::PostLoad();
+	Initialize();
+}
+
+void UItemStackBase::Initialize()
+{
+	StaticData = StaticDataHandle.GetRow<FItemStaticBase>(GetName());
+	if (StaticData)
+	{
+		Quantity = StaticData->bIsStackable ? FMath::Clamp(Quantity, 0, GetMaxSize()) : 1;
+	}
 }
 
 void UItemStackBase::SetQuantity(const int32 NewQuantity)

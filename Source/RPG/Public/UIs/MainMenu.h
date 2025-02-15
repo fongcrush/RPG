@@ -17,6 +17,10 @@ class RPG_API UMainMenu : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	
+	UPROPERTY(meta=(BindWidget))
+	UCanvas* MainCanvas;
+	
 	UPROPERTY()
 	TObjectPtr<ARPGCharacter> PlayerCharacter;
 
@@ -29,9 +33,7 @@ public:
 	UPROPERTY()
 	TArray<TObjectPtr<UInventoryWidget>> TempInventoryWidgets;
 
-	
 protected:
-
 	
 public:
 	void InitializeMainInventory();

@@ -24,10 +24,10 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UItemStackBase> ItemReference;
 	
-	UPROPERTY(EditAnywhere, Category = "Pickup | Item", meta = (ClampMin = 1))
+	UPROPERTY(EditAnywhere, meta=(ClampMin = 1))
 	int32 Quantity;
 	
-	UPROPERTY(EditAnywhere, Category = "Pickup | Item")
+	UPROPERTY(EditAnywhere, meta=(ShowOnlyInnerProperties))
 	FDataTableRowHandle ItemDataHandle;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
