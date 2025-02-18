@@ -21,8 +21,8 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> PickupMesh;
 	
-	UPROPERTY()
-	TObjectPtr<UItemStackBase> ItemReference;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UItemStackBase> ItemStack;
 	
 	UPROPERTY(EditAnywhere, meta=(ClampMin = 1))
 	int32 Quantity;
@@ -40,8 +40,7 @@ protected:
 	
 public:
 	AItemActor();
-
-	void InitializePickup();
+	void Initialize();
 	void InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int32 InQuantity);
 	
 	virtual void BeginFocus() override;

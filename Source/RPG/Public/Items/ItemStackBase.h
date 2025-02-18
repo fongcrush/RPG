@@ -21,8 +21,6 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UPROPERTY()
-	UInventoryComponent* OwningInventory;
 
 	UPROPERTY(EditDefaultsOnly)
 	FDataTableRowHandle StaticDataHandle;
@@ -34,11 +32,17 @@ public:
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UItemStackBase();
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostInitProperties() override;
 	virtual void PostLoad() override;
 	virtual void Initialize();
+	
+	UFUNCTION(Category = "Inventory")
+	void DropItem(AActor* Owner, const int32 QuantityToDrop);
 
+	UItemStackBase* Split();
+
+	// Getters
 	FORCEINLINE FItemStaticBase* GetStaticData() const { return StaticData; }
 	
 	UFUNCTION(Category = "Item")
@@ -70,10 +74,7 @@ public:
 	void SetQuantity(const int32 NewQuantity);
 
 	UFUNCTION(Category = "Item")
-	virtual void Use(class ARPGCharacter* Character);
-
-	bool operator==(const UItemStackBase* OtherItemStack) const { return this->StaticData == OtherItemStack->StaticData; }
-	bool operator==(const FItemStaticBase* OtherItemData) const { return this->StaticData == OtherItemData; }
+	virtual void Use(class ARPGCharacter* Character) {}
 	
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -81,3 +82,4 @@ protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	FItemStaticBase* StaticData;
 };
+using ItemStackPtr = TObjectPtr<UItemStackBase>;

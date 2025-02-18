@@ -20,6 +20,7 @@ public class RPG : ModuleRules
 			"EditorScriptingUtilities",
 			"DataTableEditor",
 			"AssetRegistry",
+			"Settings",
 			"FongcrushUtilities",
 		});
 

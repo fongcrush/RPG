@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/IUserObjectListEntry.h"
 #include "Blueprint/UserWidget.h"
-#include "ItemSlotWidget.generated.h"
+#include "InventorySlotWidget.generated.h"
 
 class UTextBlock;
 class UImage;
@@ -17,7 +17,7 @@ class UItemStackBase;
  * 인벤토리의 각 아이템 항목(칸)을 나타내는 위젯 클래스
  */
 UCLASS()
-class RPG_API UItemSlotWidget : public UUserWidget, public IUserObjectListEntry
+class RPG_API UInventorySlotWidget : public UUserWidget, public IUserObjectListEntry
 {
 	GENERATED_BODY()
 	
@@ -31,17 +31,26 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	FORCEINLINE void SetItemReference(UItemStackBase* ItemIn) { ItemReference = ItemIn; }
-	FORCEINLINE TObjectPtr<UItemStackBase> GetItemReference() const { return ItemReference; }
-	virtual void Reset();
+	FORCEINLINE void SetItemStack(UItemStackBase* ItemIn) { ItemStack = ItemIn; }
+	FORCEINLINE TObjectPtr<UItemStackBase> GetItemStack() const { return ItemStack; }
 	virtual void Refresh();
+	virtual void Reset();
 
 	// bool operator<(const UItemSlotWidget& Other) const { return Index < Other.Index; }
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
+	UPROPERTY(EditDefaultsOnly, Category="InventorySlot", meta=(BlueprintBaseOnly))
+	TSubclassOf<UInventoryTooltip> TooltipClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="InventorySlot", meta=(BlueprintBaseOnly))
+	TSubclassOf<UDragItemVisual> DragItemVisualClass;
+	
+	UPROPERTY(VisibleInstanceOnly, Category="InventorySlot")
+	TObjectPtr<UItemStackBase> ItemStack;
+	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UBorder> ItemBorder;
 
@@ -51,25 +60,12 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> QuantityText;
 	
-	
-	UPROPERTY(EditDefaultsOnly, Category="Inventory Slot", meta=(BlueprintBaseOnly))
-	TSubclassOf<UInventoryTooltip> TooltipClass;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Inventory Slot", meta=(BlueprintBaseOnly))
-	TSubclassOf<UDragItemVisual> DragItemVisualClass;
-	
-	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
-	TObjectPtr<UItemStackBase> ItemReference;
-	
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	virtual void NativeOnInitialized() override;
-	virtual void NativeConstruct() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
-
-	
 };
+using SlotWidgetPtr = TObjectPtr<UInventorySlotWidget>;

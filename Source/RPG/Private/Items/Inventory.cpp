@@ -7,7 +7,7 @@
 #include "Blueprint/UserWidget.h"
 
 // User Defined
-#include "Components/InventoryComponent.h"
+#include "Components/CanvasPanel.h"
 #include "RPG/RPG.h"
 #include "UIs/MainMenu.h"
 #include "UIs/RPGHUD.h"
@@ -22,7 +22,7 @@ UInventory::UInventory()
 void UInventory::Initialize()
 {
 	Super::Initialize();
-	BagStaticData = StructCast<FBagStaticData>(StaticData);
+	BagStaticData = StructCast<FInventoryStaticData>(StaticData);
 }
 
 void UInventory::Use(ARPGCharacter* Character)
@@ -30,11 +30,11 @@ void UInventory::Use(ARPGCharacter* Character)
 	Super::Use(Character);
 	if (!InventoryWidget)
 	{
-		if (FBagStaticData* StaticData = StaticDataHandle.GetRow<FBagStaticData>(GetName()))
+		if (BagStaticData)
 		{
 			ARPGPlayerController* PlayerController = GetWorld()->GetFirstPlayerController<ARPGPlayerController>();
-			UCanvas* MainCanvas = Cast<ARPGHUD>(PlayerController->GetHUD())->MainMenuWidget->MainCanvas;
-			InventoryWidget = CreateWidget<UInventoryWidget>(MainCanvas, StaticData->InventoryWidgetClass, *(StaticData->Name.ToString()));
+			UCanvasPanel* MainCanvas = Cast<ARPGHUD>(PlayerController->GetHUD())->MainMenuWidget->MainCanvas;
+			InventoryWidget = CreateWidget<UInventoryWidget>(MainCanvas, BagStaticData->InventoryWidgetClass, *(StaticData->Name.ToString()));
 			LoadSlots();
 		}
 		else
@@ -49,21 +49,16 @@ void UInventory::Use(ARPGCharacter* Character)
 	}
 }
 
-void UInventory::RegisterInventory(UInventoryComponent* Inventory)
-{
-	
-}
-
 void UInventory::LoadSlots()
 {
-	InventoryMap.Empty();
+	Contents.Empty();
 	FilledSlots.Empty();
 	EmptySlots.Empty();
-	for (const TObjectPtr<UItemSlotWidget>& Slot : InventoryWidget->Slots)
+	for (const SlotWidgetPtr& Slot : InventoryWidget->Slots)
 	{
-		if (Slot->GetItemReference())
+		if (const ItemStackPtr& ItemStack = Slot->GetItemStack())
 		{
-			InventoryMap[Slot->GetItemReference()] = Slot;
+			Contents.Add(ItemStack);
 			FilledSlots.HeapPush(Slot->Index);
 		}
 		else
@@ -73,175 +68,96 @@ void UInventory::LoadSlots()
 	}
 }
 
-UItemStackBase* UInventory::FindNoneFullStack(const UItemStackBase* InItemStack) const
+SlotWidgetPtr UInventory::FindNoneFullSlot(const ItemStackPtr& InItemStack) const
 {
-	if (InventoryMap.Contains(InItemStack))
+	for (const int32& Index : FilledSlots)
 	{
-		for (int32 Index : FilledSlots)
+		const SlotWidgetPtr& Slot = InventoryWidget->Slots[Index];
+		const ItemStackPtr& ItemStack = Slot->GetItemStack();
+		if (!ItemStack->IsFullStack() && ItemStack->GetStaticData() == InItemStack->GetStaticData())
 		{
-			const TObjectPtr<UItemStackBase>& ItemStack = InventoryWidget->Slots[Index]->GetItemReference();
-			if (!ItemStack->IsFullStack() && ItemStack->GetStaticData() == InItemStack->GetStaticData())
-			{
-				return ItemStack;
-			}
+			return Slot;
 		}
 	}
 	return nullptr;
 }
 
-
-FItemAddResult UInventory::HandleAddItem(UItemStackBase* Item)
+TArray<SlotWidgetPtr> UInventory::GetSlots() const
 {
-	if (GetOuter())
-	{
-		const int32& RequestedQuantity = Item->Quantity;
-		if (RequestedQuantity <= 0)
-		{
-			return FItemAddResult::AddedNone(FText::Format(FText::FromString(
-				TEXT("인벤토리에 {0}를 추가할수 없습니다. 잘못된 수량입니다.")), Item->GetStaticData()->Name));
-		}
-
-		// 쌓을 수 (있는 / 없는) 아이템 처리
-		if (Item->IsStackable())
-		{
-			return HandleAddStackable(Item, RequestedQuantity);
-		}
-		return HandleAddNoneStackable(Item);
-	}
-
-	return FItemAddResult::AddedNone(FText::FromString(TEXT("인벤토리에 아이템을 추가할수 없습니다.")));
+	return InventoryWidget->Slots;
 }
 
-FItemAddResult UInventory::HandleAddNoneStackable(const TObjectPtr<UItemStackBase>& Item)
-{
-	// 가방 용량 초과인지 확인
-	if (TotalWeight + Item->GetStackWeight() > BagStaticData->WeightCapacity)
-	{
-		return FItemAddResult::AddedNone(FText::Format(FText::FromString(
-			TEXT("인벤토리에 {0}를 추가할수 없습니다. 중량 한도를 초과합니다.")), Item->GetStaticData()->Name));
-	}
-
-	AddNewStack(Item, 1);
-
-	return FItemAddResult::AddedAll(1, FText::Format(FText::FromString(
-		TEXT("인벤토리에 {0} 를 추가했습니다.")), Item->GetStaticData()->Name));
-}
-
-FItemAddResult UInventory::HandleAddStackable(const TObjectPtr<UItemStackBase>& ItemStack, const int32 RequestedQuantity)
-{
-	const int32 QuantityCanAdd = GetItemQuantityCanAdd(ItemStack, RequestedQuantity);
-	const int32 LeftQuantity = RequestedQuantity > QuantityCanAdd ? RequestedQuantity - QuantityCanAdd : 0;
-
-	int32 Quantity = QuantityCanAdd;
-	while (Quantity)
-	{
-		// 자리가 남은 기존 스택이 있음 / 없음
-		if (UItemStackBase* ExistingItem = FindNoneFullStack(ItemStack))
-		{
-			const int32 QuantityToAdd = FMath::Min(ExistingItem->GetEmptySize(), Quantity);
-			ExistingItem->SetQuantity(ExistingItem->Quantity + QuantityToAdd);
-			FindSlot(ExistingItem)->Refresh();
-			Quantity -= QuantityToAdd;
-		}
-		else
-		{
-			const int32 QuantityToAdd = FMath::Min(ItemStack->GetMaxSize(), Quantity);
-			AddNewStack(ItemStack, QuantityToAdd);
-			Quantity -= QuantityToAdd;
-		}
-	}
-
-	if (LeftQuantity > 0)
-	{
-		ItemStack->SetQuantity(LeftQuantity);
-	}
-
-	// 추가 결과 반환
-	if (QuantityCanAdd == RequestedQuantity)
-	{
-		return FItemAddResult::AddedAll(RequestedQuantity, FText::Format(FText::FromString(
-			TEXT("인벤토리에 {0}를 {1}개 추가했습니다.")), ItemStack->GetStaticData()->Name, RequestedQuantity));
-	}
-
-	if (QuantityCanAdd < RequestedQuantity && QuantityCanAdd > 0)
-	{
-		return FItemAddResult::AddedPartial(RequestedQuantity, FText::Format(FText::FromString(
-			TEXT("인벤토리에 {0}를 {1}개 중 {2}개 추가했습니다.")),ItemStack->GetStaticData()->Name, RequestedQuantity, QuantityCanAdd));
-	}
-
-	if (QuantityCanAdd <= 0)
-	{
-		return FItemAddResult::AddedNone(FText::Format(FText::FromString(
-			TEXT("인벤토리에 {0}를 추가할수 없습니다. 중량 한도를 초과합니다.")), ItemStack->GetStaticData()->Name));
-	}
-
-	return FItemAddResult::AddedNone(FText::Format(FText::FromString(
-		TEXT("인벤토리에 {0}를 추가할수 없습니다. 알 수 없는 에러 입니다.")), ItemStack->GetStaticData()->Name));
-}
-
-void UInventory::AddNewStack(const TObjectPtr<UItemStackBase>& ItemStack, int32 Quantity)
+void UInventory::AddStack(const TObjectPtr<UItemStackBase>& ItemStack, const int32& InQuantity)
 {
 	UItemStackBase* NewItem = DuplicateObject<UItemStackBase>(ItemStack, this);
-
-	NewItem->OwningInventory = Cast<UInventoryComponent>(GetOuter());
-	NewItem->SetQuantity(Quantity);
-
-	SetWeight(TotalWeight - NewItem->GetStackWeight());
-
+	NewItem->SetQuantity(Quantity);	
+	Weight += NewItem->GetStackWeight();
+	
 	int32 Index = 0;
+	Contents.Add(ItemStack);
 	EmptySlots.HeapPop(Index);
 	FilledSlots.HeapPush(Index);
 	InventoryWidget->Slots[Index]->Refresh();
-
-	InventoryMap[NewItem] = InventoryWidget->Slots[Index];
+	
+	SlotMap[NewItem] = InventoryWidget->Slots[Index];
 }
 
-void UInventory::RemoveStack(UItemStackBase* ItemStack)
+bool UInventory::RemoveExisting(UItemStackBase* ItemStack)
 {
-	UItemSlotWidget* Slot = InventoryMap[ItemStack];
-	FilledSlots.HeapRemoveAt(FilledSlots.IndexOfByKey(Slot->Index));
-	EmptySlots.HeapPush(Slot->Index);
-	Slot->Reset();
-
-	InventoryMap.Remove(ItemStack);
-
-	SetWeight(TotalWeight - ItemStack->GetStackWeight());
+	const int32 Index = FilledSlots.IndexOfByKey(FindSlot(ItemStack)->Index);
+	if (Index != INDEX_NONE)
+	{
+		Contents.Remove(ItemStack);
+		FilledSlots.HeapRemoveAt(Index);
+		EmptySlots.HeapPush(Index);
+		SlotMap.Remove(ItemStack);
+		InventoryWidget->Slots[Index]->Reset();
+		
+		// TODO: 총 중량 갱신하기
+		
+		return true;
+	}
+	return false;
 }
 
-int32 UInventory::RemoveStackQuantity(UItemStackBase* Item, const int32 RequestedQuantity)
+int32 UInventory::RemoveItemQuantity(UItemStackBase* ItemStack, const int32 RequestedQuantity)
 {
-	if (RequestedQuantity <= 0 || !Item)
+	if (RequestedQuantity <= 0 || !ItemStack)
 	{
 		return 0;
 	}
 
-	const int32 QuantityToRemove = FMath::Min(RequestedQuantity, Item->Quantity);
-	Item->SetQuantity(Item->Quantity - QuantityToRemove);
+	const int32 QuantityToRemove = FMath::Min(RequestedQuantity, ItemStack->Quantity);
+	ItemStack->SetQuantity(ItemStack->Quantity - QuantityToRemove);
 
-	if (Item->IsEmpty())
+	if (ItemStack->IsEmpty())
 	{
-		RemoveStack(Item);
+		RemoveExisting(ItemStack);
 	}
 	else
 	{
-		SetWeight(TotalWeight - QuantityToRemove * Item->GetSingleWeight());
-		FindSlot(Item)->Refresh();
+		FindSlot(ItemStack)->Refresh();
+		Weight -= QuantityToRemove * ItemStack->GetSingleWeight();
 	}
 
 	return QuantityToRemove;
 }
 
-void UInventory::SplitStack(UItemStackBase* Item, const int32 Quantity)
+void UInventory::SplitStack(UItemStackBase* Item, const int32 InQuantity)
 {
-	RemoveStackQuantity(Item, Quantity);
-	AddNewStack(Item, Quantity);
+	RemoveItemQuantity(Item, InQuantity);
+	AddStack(Item, InQuantity);
 }
 
-void UInventory::SetWeight(const float& InWeight)
+void UInventory::DropItemQuantity(AActor* Owner, UItemStackBase* DroppingStack, const int32 DroppingQuantity) const
 {
-}
-
-int32 UInventory::GetItemQuantityCanAdd(const TObjectPtr<UItemStackBase>& Item, int32 Quantity) const
-{
-	return FMath::Min(Quantity, FMath::FloorToInt(BagStaticData->WeightCapacity - TotalWeight / Item->GetSingleWeight()));
+	if (Contains(DroppingStack))
+	{
+		DroppingStack->DropItem(Owner, DroppingQuantity);
+		FindSlot(DroppingStack)->Refresh();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to DropItem"));
+	}
 }

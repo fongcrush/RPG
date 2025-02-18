@@ -36,34 +36,34 @@ class RPG_API ARPGCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+#pragma region public_functions
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-#pragma region public_functions
 	ARPGCharacter();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaTime) override;
-	
 
+	UFUNCTION()
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-
+	
+	UFUNCTION()
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera;}
-
+	
+	UFUNCTION()
 	FORCEINLINE UInventoryComponent* GetInventory() const { return Inventory; }
 	
+	UFUNCTION()
 	FORCEINLINE bool IsInteracting() const { return GetWorldTimerManager().IsTimerActive(InteractionTimerHandle);}
 
 	void UpdateInteractionWidget() const;
-
-	void DropItem(UItemStackBase* ItemToDrop, const int32 Quantity);
-	
 #pragma endregion
 	
 protected:
+#pragma region protected_variables
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-#pragma region protected_variables
 	UPROPERTY()
 	TObjectPtr<ARPGHUD> HUD;
 
@@ -108,13 +108,11 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> UIToggleAction;
-	
 #pragma endregion
-	
+#pragma region protected_functions
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
-#pragma region protected_functions
 	virtual void BeginPlay() override;
 	
 	void PerformInteractionCheck();
@@ -127,7 +125,6 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	
-	void ToggleMenu();
-	
+	void ToggleMenu();	
 #pragma endregion
 };

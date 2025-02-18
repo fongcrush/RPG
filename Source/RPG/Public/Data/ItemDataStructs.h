@@ -1,9 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DataTableEditorUtils.h"
 #include "DataTableUtils.h"
 #include "ItemDataStructs.generated.h"
+
+class UInventoryWidget;
 
 UENUM()
 enum class EItemType : uint8
@@ -138,11 +139,11 @@ struct FItemStaticBase : public FTableRowBase
 };
 
 USTRUCT()
-struct FBagStaticData : public FItemStaticBase
+struct FInventoryStaticData : public FItemStaticBase
 {
 	GENERATED_BODY()
 
-	FBagStaticData(): WeightCapacity(100), Width(1), Height(1)
+	FInventoryStaticData(): Width(1), Height(1)
 	{
 		Type = EItemType::Mundane;
 		Quality = EItemQuality::Normal;
@@ -154,9 +155,6 @@ struct FBagStaticData : public FItemStaticBase
 		UsageText = FText::FromString(TEXT("가방을 엽니다."));
 		Description = FText::FromString(TEXT("가방입니다."));
 	}
-
-	UPROPERTY(EditDefaultsOnly, meta=(ClampMin = 0))
-	float WeightCapacity;	
 
 	UPROPERTY(EditDefaultsOnly, meta=(ClampMin = 1))
 	int32 Width;

@@ -14,7 +14,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "World/ItemActor.h"
 
 // Sets default values
 ARPGCharacter::ARPGCharacter()
@@ -78,7 +77,6 @@ void ARPGCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		
 		EnhancedInputComponent->BindAction(UIToggleAction, ETriggerEvent::Triggered, this, &ARPGCharacter::ToggleMenu);
 	}
-
 }
 
 // Called when the game starts or when spawned
@@ -95,7 +93,7 @@ void ARPGCharacter::BeginPlay()
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
-	}	
+	}
 }
 
 void ARPGCharacter::ToggleMenu()
@@ -106,30 +104,6 @@ void ARPGCharacter::ToggleMenu()
 void ARPGCharacter::UpdateInteractionWidget() const
 {
 	HUD->UpdateInteractionWidget(TargetInteractable->GetInteractableData());
-}
-
-void ARPGCharacter::DropItem(UItemStackBase* ItemToDrop, const int32 Quantity)
-{
-	if (Inventory->Contains(ItemToDrop))
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.bNoFail = true;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-		const FVector SpawnLocation(GetActorLocation() + (GetActorForwardVector() * 50.f) + FVector(0.f, 0.f, 50.f));
-		const FTransform SpawnTransform(GetActorRotation(), SpawnLocation);
-
-		const int32 RemovedQuantity = Inventory->RemoveStackQuantity(ItemToDrop, Quantity);
-		
-		AItemActor* ItemActor = GetWorld()->SpawnActor<AItemActor>(AItemActor::StaticClass(), SpawnTransform, SpawnParams);
-
-		ItemActor->InitializeDrop(ItemToDrop, RemovedQuantity);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Fail to DropItem"));
-	}
 }
 
 void ARPGCharacter::PerformInteractionCheck()

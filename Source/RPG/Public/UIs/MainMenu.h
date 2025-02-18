@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "MainMenu.generated.h"
 
+class UCanvasPanel;
 class UInventoryWidget;
 class ARPGCharacter;
 /**
@@ -19,31 +20,20 @@ class RPG_API UMainMenu : public UUserWidget
 public:
 	
 	UPROPERTY(meta=(BindWidget))
-	UCanvas* MainCanvas;
+	TObjectPtr<UCanvasPanel> MainCanvas;
 	
-	UPROPERTY()
-	TObjectPtr<ARPGCharacter> PlayerCharacter;
-
-	UPROPERTY()
+	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UInventoryWidget> MainInventoryWidget;
 	
 	UPROPERTY()
 	TArray<TObjectPtr<UInventoryWidget>> SubInventoryWidgets;
 	
 	UPROPERTY()
-	TArray<TObjectPtr<UInventoryWidget>> TempInventoryWidgets;
+	TObjectPtr<ARPGCharacter> PlayerCharacter;
 
-protected:
-	
-public:
-	void InitializeMainInventory();
-	void AddSubInventory(UInventoryWidget* SubInventoryWidget);
-	
 
 protected:
 	virtual void NativeOnInitialized() override;
-	virtual void SynchronizeProperties() override;
 	virtual void NativeConstruct() override;
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
-
 };

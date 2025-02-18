@@ -5,6 +5,7 @@
 
 #include "Components/InventoryComponent.h"
 #include "Framework/RPGCharacter.h"
+#include "Items/Inventory.h"
 #include "Items/ItemStackBase.h"
 #include "UIs/RPGHUD.h"
 
@@ -22,19 +23,20 @@ AItemActor::AItemActor()
 void AItemActor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	InitializePickup();
+	
+	Initialize();
 }
 
-void AItemActor::InitializePickup()
+void AItemActor::Initialize()
 {
-	if (FItemStaticBase* ItemData = ItemDataHandle.GetRow<FItemStaticBase>(GetName()))
+	if (FItemStaticBase* StaticData = ItemDataHandle.GetRow<FItemStaticBase>(GetName()))
 	{
-		ItemReference = NewObject<UItemStackBase>(this);
-		ItemReference->StaticData = ItemData;
-		ItemReference->SetQuantity(Quantity);
+		ItemStack = NewObject<UItemStackBase>(this);
+		ItemStack->StaticDataHandle = ItemDataHandle;
+		ItemStack->Initialize();
+		ItemStack->SetQuantity(Quantity);
 
-		PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
+		PickupMesh->SetStaticMesh(StaticData->AssetData.Mesh);
 
 		UpdateInteractableData();
 	}
@@ -43,11 +45,10 @@ void AItemActor::InitializePickup()
 
 void AItemActor::InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int32 InQuantity)
 {
-	// TODO: 수정 필요
-	ItemReference = DropItem;
+	ItemDataHandle = DropItem->StaticDataHandle;
+	ItemStack = DropItem;
+	ItemStack->Quantity <= 0 ? ItemStack->SetQuantity(1) : ItemStack->SetQuantity(InQuantity);
 	
-	DropItem->Quantity <= 0 ? ItemReference->SetQuantity(1) : ItemReference->SetQuantity(InQuantity);
-	ItemReference->GetStaticData()->Weight = DropItem->GetSingleWeight();
 	PickupMesh->SetStaticMesh(DropItem->GetStaticData()->AssetData.Mesh);
 
 	UpdateInteractableData();
@@ -56,9 +57,9 @@ void AItemActor::InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int3
 void AItemActor::UpdateInteractableData()
 {
 	InteractableData.InteractableType = EInteractableType::Pickup;
-	InteractableData.Action = ItemReference->GetStaticData()->InteractionText;
-	InteractableData.Name = ItemReference->GetStaticData()->Name;
-	InteractableData.Quantity = ItemReference->Quantity;
+	InteractableData.Action = ItemStack->GetStaticData()->InteractionText;
+	InteractableData.Name = ItemStack->GetStaticData()->Name;
+	InteractableData.Quantity = ItemStack->Quantity;
 }
 
 void AItemActor::BeginFocus()
@@ -89,16 +90,16 @@ void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 {
 	if (!IsPendingKillPending())
 	{
-		if (ItemReference == nullptr)
+		if (ItemStack == nullptr)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("인벤토리 속 아이템 참조가 null 입니다"));
 			return;
 		}
 		
 		// TODO: 플레이어 인벤토리에 아이템 추가 및 조정
-		if (const TObjectPtr<UInventoryComponent> Inventory = Taker->GetInventory())
+		if (const TObjectPtr<UInventoryComponent> InventoryComponent = Taker->GetInventory())
 		{
-			const FItemAddResult AddResult = Inventory->HandleAddItem(ItemReference);
+			const FItemAddResult AddResult = InventoryComponent->HandleAddItem(ItemStack);
 
 			switch (AddResult.OperationResult)
 			{

@@ -39,5 +39,5 @@ DECLARE_LOG_CATEGORY_EXTERN(RPG, Log, All);
 template<typename T, typename U>
 T* StructCast(U* Source)
 {
-	return (Source && std::is_base_of<T, U>::value) ? static_cast<T*>(Source) : nullptr;
+	return (Source && std::is_base_of_v<T, U>) ? static_cast<T*>(Source) : nullptr;
 }

@@ -8,7 +8,7 @@
 
 // User Defined
 #include "Items/ItemStackBase.h"
-#include "UIs/Inventory/ItemSlotWidget.h"
+#include "UIs/Inventory/InventorySlotWidget.h"
 
 void UInventoryTooltip::NativeConstruct()
 {
@@ -16,7 +16,7 @@ void UInventoryTooltip::NativeConstruct()
 
 	if (SlotBeingHovered)
 	{
-		if (const TObjectPtr<UItemStackBase>& ItemBeingHovered = SlotBeingHovered->GetItemReference())
+		if (const TObjectPtr<UItemStackBase>& ItemBeingHovered = SlotBeingHovered->GetItemStack())
 		{
 			Name->SetText(ItemBeingHovered->GetItemName());
 			Description->SetText(ItemBeingHovered->GetStaticData()->Description);
