@@ -4,19 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "Data/ItemDataStructs.h"
-#include "ItemStackBase.generated.h"
+#include "Interfaces/DynamicItem.h"
+#include "RPG/RPG.h"
+#include "ItemBase.generated.h"
 
-class UItemStackBase;
+class UInventorySlotWidget;
+class UItemBase;
 class AItemActor;
-class UInventoryComponent;
 
-UCLASS()
-class RPG_API UItemStackBase : public UObject
+UCLASS(Blueprintable, BlueprintType)
+class RPG_API UItemBase : public UObject
 {
 	GENERATED_BODY()
 
-	friend AItemActor;
-	
 public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
@@ -24,62 +24,92 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	FDataTableRowHandle StaticDataHandle;
-	
-	UPROPERTY(VisibleInstanceOnly)
-	int32 Quantity;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UItemStackBase();
+	UItemBase();
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 	virtual void PostInitProperties() override;
 	virtual void PostLoad() override;
 	virtual void Initialize();
 	
-	UFUNCTION(Category = "Inventory")
-	void DropItem(AActor* Owner, const int32 QuantityToDrop);
+	/** 정적/동적 아이템 판별 후 CDO/Instnace 반환 */
+	template <typename T>
+	static T* GetValidItem(UItemBase* Item);
+	static UItemBase* GetValidItem(UItemBase* Item) { return GetValidItem<UItemBase>(Item); }
 
-	UItemStackBase* Split();
+	/** 정적/동적 아이템 판별 후 CDO/Instnace 반환 */
+	template <typename T>
+	static T* GetValidItem(UClass* Item);
+	static UItemBase* GetValidItem(UClass* Item) { return GetValidItem<UItemBase>(Item); }
+
+
+	UFUNCTION(Category="Inventory")
+	virtual void Drop(AActor* Owner, const int32 QuantityToDrop);
 
 	// Getters
 	FORCEINLINE FItemStaticBase* GetStaticData() const { return StaticData; }
-	
-	UFUNCTION(Category = "Item")
-	FORCEINLINE FText GetItemName() const { return StaticData->Name; }
-	
-	UFUNCTION(Category = "Item")
-	FORCEINLINE float GetStackWeight() const { return Quantity * StaticData->Weight; }
-	
-	UFUNCTION(Category = "Item")
-	FORCEINLINE float GetSingleWeight() const { return StaticData->Weight; }
 
-	UFUNCTION(Category = "Item")
+	UFUNCTION(Category="Item")
+	FORCEINLINE FText GetItemName() const { return StaticData->Name; }
+
+	UFUNCTION(Category="Item")
+	virtual FORCEINLINE float GetWeight() const { return StaticData->Weight; }
+
+	UFUNCTION(Category="Item")
 	FORCEINLINE int32 GetMaxSize() const { return StaticData->MaxStackSize; }
 
-	UFUNCTION(Category = "Item")
-	FORCEINLINE int32 GetEmptySize() const { return StaticData->MaxStackSize - Quantity; }
-		
-	UFUNCTION(Category = "Item")
-	FORCEINLINE bool IsFullStack() const { return IsStackable() ? (Quantity >= StaticData->MaxStackSize) : (Quantity > 0); }
-
-	UFUNCTION(Category = "Item")
+	UFUNCTION(Category="Item")
 	FORCEINLINE bool IsStackable() const { return StaticData->bIsStackable; }
 
-	UFUNCTION(Category = "Item")
-	FORCEINLINE bool IsEmpty() const { return Quantity == 0; }
-
-	/* 아이템의 수량을 설정하고, 수량이 0이 되면 아이템을 제거 */
-	UFUNCTION(Category = "Item")
-	void SetQuantity(const int32 NewQuantity);
-
-	UFUNCTION(Category = "Item")
+	UFUNCTION(Category="Item")
 	virtual void Use(class ARPGCharacter* Character) {}
-	
+
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	FItemStaticBase* StaticData;
 };
-using ItemStackPtr = TObjectPtr<UItemStackBase>;
+
+using ItemPtr = TObjectPtr<UItemBase>;
+
+template <typename T>
+T* UItemBase::GetValidItem(UItemBase* Item)
+{
+	if (!Item)
+	{
+		LOG_CALLSTACK("Item Is nullptr")
+		return nullptr;
+	}
+	if (Item->Implements<UDynamicItem>())
+	{
+		return DuplicateObject<T>(Cast<T>(Item), nullptr);
+	}
+	return Cast<T>(Item);
+}
+
+template <typename T>
+T* UItemBase::GetValidItem(UClass* Item)
+{
+	if (!Item)
+	{
+		LOG_CALLSTACK("Item Is nullptr")
+		return nullptr;
+	}
+	
+	T* DefaultObj = Cast<T>(Item->GetDefaultObject());
+	if (!DefaultObj)
+	{
+		return nullptr;
+	}
+	
+	if (DefaultObj->Implements<UDynamicItem>())
+	{
+		return DuplicateObject<T>(DefaultObj, nullptr);
+	}
+	return Cast<T>(Item->GetDefaultObject());
+}

@@ -7,7 +7,7 @@
 #include "ItemDragDropOperation.generated.h"
 
 class UInventorySlotWidget;
-class UItemStackBase;
+class UItemBase;
 class UInventoryComponent;
 
 /**
@@ -20,9 +20,9 @@ class RPG_API UItemDragDropOperation : public UDragDropOperation
 
 public:
 	UPROPERTY()
-	TObjectPtr<UItemStackBase> SourceItemStack;
+	TObjectPtr<UInventorySlotWidget> SourceSlotWidget;
 
 	UPROPERTY()
-	TObjectPtr<UInventorySlotWidget> SourceSlotWidget;
+	int32 Quantity;
 	
 };

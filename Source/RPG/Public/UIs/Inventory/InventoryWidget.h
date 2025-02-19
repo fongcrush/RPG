@@ -9,7 +9,7 @@
 
 // User Defined
 #include "InventorySlotWidget.h"
-#include "Items/ItemStackBase.h"
+#include "Items/ItemBase.h"
 #include "UIs/MovingUserWidget.h"
 
 #include "InventoryWidget.generated.h"

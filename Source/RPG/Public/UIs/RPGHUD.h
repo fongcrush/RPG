@@ -8,7 +8,7 @@
 #include "RPGHUD.generated.h"
 
 class UInteractionWidget;
-class UMainMenu;
+class UMainInventoryMenu;
 
 /**
  * 
@@ -23,10 +23,10 @@ public:
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
-	TSubclassOf<UMainMenu> MainMenuWidgetClass;
+	TSubclassOf<UMainInventoryMenu> MainInventoryMenuClass;
 	
 	UPROPERTY()
-	TObjectPtr<UMainMenu> MainMenuWidget;
+	TObjectPtr<UMainInventoryMenu> MainInventoryMenu;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 	TSubclassOf<UInteractionWidget> InteractionWidgetClass;

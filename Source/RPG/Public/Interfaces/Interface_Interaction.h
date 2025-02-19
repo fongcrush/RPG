@@ -64,11 +64,11 @@ class RPG_API IInterface_Interaction
 	GENERATED_BODY()
 
 public:
-	virtual void BeginFocus();
-	virtual void EndFocus();
-	virtual void BeginInteract();
-	virtual void EndInteract();
-	virtual void Interact(TObjectPtr<ARPGCharacter> InteractionCharacter);
+	virtual void BeginFocus() {};
+	virtual void EndFocus() {};
+	virtual void BeginInteract() {};
+	virtual void EndInteract() {};
+	virtual void Interact(ARPGCharacter* const& InteractionCharacter) {};
 	const FInteractableData& GetInteractableData() { return InteractableData; }
 
 protected:

@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"
 #include "GameFramework/Character.h"
 #include "RPGCharacter.generated.h"
 
-class UItemStackBase;
+class UItemBase;
 class UInventoryComponent;
 class IInterface_Interaction;
 class USpringArmComponent;
@@ -14,7 +15,6 @@ class UCameraComponent;
 class ARPGHUD;
 class UInputMappingContext;
 class UInputAction;
-struct FInputActionValue;
 
 USTRUCT()
 struct FInteractionData
@@ -51,7 +51,7 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera;}
 	
 	UFUNCTION()
-	FORCEINLINE UInventoryComponent* GetInventory() const { return Inventory; }
+	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	
 	UFUNCTION()
 	FORCEINLINE bool IsInteracting() const { return GetWorldTimerManager().IsTimerActive(InteractionTimerHandle);}
@@ -77,10 +77,10 @@ protected:
 	TObjectPtr<UCameraComponent> FollowCamera;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Character")
-	TObjectPtr<UInventoryComponent> Inventory;
-
-	UPROPERTY(VisibleAnywhere, Category = "Character")
 	TScriptInterface<IInterface_Interaction> TargetInteractable;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Character")
+	TObjectPtr<UInventoryComponent> InventoryComponent;
 
 	float InteractionCheckFrequency;
 

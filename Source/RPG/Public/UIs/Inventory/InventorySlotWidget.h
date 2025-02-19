@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/IUserObjectListEntry.h"
 #include "Blueprint/UserWidget.h"
+#include "Items/ItemBase.h"
 #include "InventorySlotWidget.generated.h"
 
 class UTextBlock;
@@ -12,7 +13,7 @@ class UImage;
 class UBorder;
 class UInventoryTooltip;
 class UDragItemVisual;
-class UItemStackBase;
+class UItemBase;
 /**
  * 인벤토리의 각 아이템 항목(칸)을 나타내는 위젯 클래스
  */
@@ -28,15 +29,18 @@ public:
 	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
 	int32 Index;
 	
+	UPROPERTY(VisibleInstanceOnly, Category="InventorySlot")
+	TObjectPtr<UItemBase> Item;
+	
+	UPROPERTY()
+	int32 Quantity;
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	FORCEINLINE void SetItemStack(UItemStackBase* ItemIn) { ItemStack = ItemIn; }
-	FORCEINLINE TObjectPtr<UItemStackBase> GetItemStack() const { return ItemStack; }
 	virtual void Refresh();
 	virtual void Reset();
-
-	// bool operator<(const UItemSlotWidget& Other) const { return Index < Other.Index; }
+	virtual void Drop(const int32& QuantityDropped);
+	FORCEINLINE int32 GetEmptySize() const { return Item->GetMaxSize() - Quantity; }
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -48,9 +52,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="InventorySlot", meta=(BlueprintBaseOnly))
 	TSubclassOf<UDragItemVisual> DragItemVisualClass;
 	
-	UPROPERTY(VisibleInstanceOnly, Category="InventorySlot")
-	TObjectPtr<UItemStackBase> ItemStack;
-	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UBorder> ItemBorder;
 
@@ -59,6 +60,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> QuantityText;
+
+	UPROPERTY()
+	UInventoryTooltip* Tooltip;
 	
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS

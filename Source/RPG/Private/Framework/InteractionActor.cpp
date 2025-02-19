@@ -53,8 +53,8 @@ void AInteractionActor::EndInteract()
 	UE_LOG(LogTemp, Warning, TEXT("AInteractionActor::EndInteract"));
 }
 
-void AInteractionActor::Interact(TObjectPtr<ARPGCharacter> InteractionCharacter)
+void AInteractionActor::Interact(ARPGCharacter* const& InteractionCharacter)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AInteractionActor::Interact"));
+	IInterface_Interaction::Interact(InteractionCharacter);
 }
 

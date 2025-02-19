@@ -5,7 +5,7 @@
 #include "Interfaces/Interface_Interaction.h"
 #include "UIs/RPGHUD.h"
 
-// UE header
+// UE
 #include "DrawDebugHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -50,8 +50,8 @@ ARPGCharacter::ARPGCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("PlayerInventory"));
-	Inventory->SetWeightCapacity(200.f);
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("PlayerInventory"));
+	InventoryComponent->SetWeightCapacity(200.f);
 
 	InteractionCheckFrequency = 0.1f;
 	InteractionCheckDistance = 175.f;

@@ -25,10 +25,10 @@ void UInventoryWidget::MakeSlots()
 	{
 		for (int Column = 0; Column < SlotColumnSize; ++Column)
 		{
-			UInventorySlotWidget* Slot = CreateWidget<UInventorySlotWidget>(this, SlotClass);
-			InventoryPanel->AddChildToUniformGrid(Slot ,Row, Column);
-			Slot->Index = Row * SlotColumnSize + Column;
-			Slots.Add(Slot);
+			UInventorySlotWidget* NewSlot = CreateWidget<UInventorySlotWidget>(this, SlotClass);
+			InventoryPanel->AddChildToUniformGrid(NewSlot ,Row, Column);
+			NewSlot->Index = Row * SlotColumnSize + Column;
+			Slots.Add(NewSlot);
 		}
 	}
 }

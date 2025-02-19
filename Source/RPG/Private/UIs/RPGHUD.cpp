@@ -3,18 +3,18 @@
 
 #include "UIs/RPGHUD.h"
 
-#include "UIs/MainMenu.h"
+#include "UIs/MainInventoryMenu.h"
 #include "UIs/Interaction/InteractionWidget.h"
 
 void ARPGHUD::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (MainMenuWidgetClass)
+	if (MainInventoryMenuClass)
 	{
-		MainMenuWidget = CreateWidget<UMainMenu>(GetWorld(), MainMenuWidgetClass);
-		MainMenuWidget->AddToViewport();
-		MainMenuWidget->SetVisibility(ESlateVisibility::Collapsed);
+		MainInventoryMenu = CreateWidget<UMainInventoryMenu>(GetWorld(), MainInventoryMenuClass);
+		MainInventoryMenu->AddToViewport();
+		MainInventoryMenu->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
 	if (InteractionWidgetClass)
@@ -27,19 +27,19 @@ void ARPGHUD::BeginPlay()
 
 void ARPGHUD::DisplayMenu()
 {
-	if (MainMenuWidget)
+	if (MainInventoryMenu)
 	{
 		bIsMenuVisible = true;
-		MainMenuWidget->SetVisibility(ESlateVisibility::Visible);
+		MainInventoryMenu->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
 void ARPGHUD::HideMenu()
 {
-	if (MainMenuWidget)
+	if (MainInventoryMenu)
 	{
 		bIsMenuVisible = false;
-		MainMenuWidget->SetVisibility(ESlateVisibility::Collapsed);
+		MainInventoryMenu->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
 

@@ -9,7 +9,7 @@
 
 class UTextBlock;
 class UImage;
-class UItemStackBase;
+class UItemBase;
 
 /**
  * 
@@ -27,5 +27,5 @@ public:
 	TObjectPtr<UTextBlock> ItemQuantity;
 	
 	UPROPERTY(VisibleAnywhere, Category="Inventory Slot")
-	TObjectPtr<UItemStackBase> ItemReference;
+	TObjectPtr<UItemBase> Item;
 };

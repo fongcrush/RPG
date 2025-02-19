@@ -5,8 +5,8 @@
 
 #include "Components/InventoryComponent.h"
 #include "Framework/RPGCharacter.h"
-#include "Items/Inventory.h"
-#include "Items/ItemStackBase.h"
+#include "Items/ItemBase.h"
+#include "RPG/RPG.h"
 #include "UIs/RPGHUD.h"
 
 AItemActor::AItemActor()
@@ -16,39 +16,39 @@ AItemActor::AItemActor()
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
 	PickupMesh->SetSimulatePhysics(true);
 	SetRootComponent(PickupMesh);
-	
-	Quantity = 1;	
+
+	Quantity = 1;
 }
 
 void AItemActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
 	Initialize();
 }
 
 void AItemActor::Initialize()
 {
-	if (FItemStaticBase* StaticData = ItemDataHandle.GetRow<FItemStaticBase>(GetName()))
+	if (!Item)
 	{
-		ItemStack = NewObject<UItemStackBase>(this);
-		ItemStack->StaticDataHandle = ItemDataHandle;
-		ItemStack->Initialize();
-		ItemStack->SetQuantity(Quantity);
-
-		PickupMesh->SetStaticMesh(StaticData->AssetData.Mesh);
-
-		UpdateInteractableData();
+		LOG_ERROR("%s: ItemClass is nullptr", *GetName());
+		return;
 	}
+	PickupMesh->SetStaticMesh(Item->GetStaticData()->AssetData.Mesh);
+	UpdateInteractableData();
 }
 
-
-void AItemActor::InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int32 InQuantity)
+void AItemActor::InitializeDrop(const TObjectPtr<UItemBase>& DropItem, int32 InQuantity)
 {
-	ItemDataHandle = DropItem->StaticDataHandle;
-	ItemStack = DropItem;
-	ItemStack->Quantity <= 0 ? ItemStack->SetQuantity(1) : ItemStack->SetQuantity(InQuantity);
+	// TODO: 호출쪽에서 DropItem를 CDO/Instance 복사본 중 어떤 걸로 넘겨줄지, 수량 전부/일부에 따라서 결정해야 함 
+	if (!DropItem)
+	{
+		LOG_ERROR("%s: DropItem is nullptr", *GetName());
+		return;
+	}
 	
+	Item = DropItem;
+	Quantity = InQuantity;
+
 	PickupMesh->SetStaticMesh(DropItem->GetStaticData()->AssetData.Mesh);
 
 	UpdateInteractableData();
@@ -56,84 +56,64 @@ void AItemActor::InitializeDrop(const TObjectPtr<UItemStackBase>& DropItem, int3
 
 void AItemActor::UpdateInteractableData()
 {
-	InteractableData.InteractableType = EInteractableType::Pickup;
-	InteractableData.Action = ItemStack->GetStaticData()->InteractionText;
-	InteractableData.Name = ItemStack->GetStaticData()->Name;
-	InteractableData.Quantity = ItemStack->Quantity;
-}
-
-void AItemActor::BeginFocus()
-{
-	if (PickupMesh)
+	if (!Item)
 	{
-		PickupMesh->SetRenderCustomDepth(true);
+		LOG_ERROR("%s: ItemClass is nullptr", *GetName());
+		return;
 	}
-}
-
-void AItemActor::EndFocus()
-{
-	if (PickupMesh)
+	if (FItemStaticBase* StaticData = Item->GetStaticData())
 	{
-		PickupMesh->SetRenderCustomDepth(false);
-	}
-}
-
-void AItemActor::Interact(TObjectPtr<ARPGCharacter> InteractionCharacter)
-{
-	if (InteractionCharacter)
-	{
-		TakePickup(InteractionCharacter);
+		InteractableData.InteractableType = EInteractableType::Pickup;
+		InteractableData.Action = StaticData->InteractionText;
+		InteractableData.Name = StaticData->Name;
 	}
 }
 
 void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 {
-	if (!IsPendingKillPending())
+	if (IsPendingKillPending())
 	{
-		if (ItemStack == nullptr)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("인벤토리 속 아이템 참조가 null 입니다"));
-			return;
-		}
-		
-		// TODO: 플레이어 인벤토리에 아이템 추가 및 조정
-		if (const TObjectPtr<UInventoryComponent> InventoryComponent = Taker->GetInventory())
-		{
-			const FItemAddResult AddResult = InventoryComponent->HandleAddItem(ItemStack);
-
-			switch (AddResult.OperationResult)
-			{
-			case EItemAddResult::None:
-				break;
-
-			case EItemAddResult::Partial:
-				UpdateInteractableData();
-				Taker->UpdateInteractionWidget();
-				break;
-
-			case EItemAddResult::All:
-				Destroy();
-				break;
-			}
-
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *AddResult.ResultMessage.ToString());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Player Inventory is null!"));
-		}
+		LOG_CALLINFO("이미 사라진 아이템 입니다.");
+		return;
 	}
+	if (Item == nullptr)
+	{
+		LOG_CALLINFO("유효한 아이템이 아닙니다.");
+		return;
+	}
+	if (!Taker->GetInventoryComponent())
+	{
+		LOG_CALLINFO("플레이어 인벤토리가 유효하지 않습니다.");
+		return;
+	}
+	
+	// 인벤토리에 아이템 추가 및 조정
+	const FItemAddResult AddResult = Taker->GetInventoryComponent()->HandleAddItem(Item, Quantity);
+	switch (AddResult.OperationResult)
+	{
+	case EItemAddResult::None:
+		break;
+	case EItemAddResult::Partial:
+		UpdateInteractableData();
+		Taker->UpdateInteractionWidget();
+		Quantity = AddResult.LeftQuantity;
+		break;
+	case EItemAddResult::All:
+		Destroy();
+		break;
+	}
+	LOG_CALLINFO("%s", *AddResult.ResultMessage.ToString());
 }
 
 #if WITH_EDITOR
 void AItemActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	
+
 	const FName ChangedPropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.GetPropertyName() : NAME_None;
 	if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(FDataTableRowHandle, RowName))
 	{
-		if (FItemStaticBase* ItemData = ItemDataHandle.GetRow<FItemStaticBase>(GetName()))
+		if (FItemStaticBase* ItemData = Item->GetStaticData())
 		{
 			PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
 

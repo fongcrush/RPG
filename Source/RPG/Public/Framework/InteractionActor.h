@@ -21,7 +21,7 @@ public:
 	virtual void EndFocus() override;
 	virtual void BeginInteract() override;
 	virtual void EndInteract() override;
-	virtual void Interact(TObjectPtr<ARPGCharacter> InteractionCharacter) override;
+	virtual void Interact(ARPGCharacter* const& InteractionCharacter) override;
 	
 	virtual void Tick(float DeltaTime) override;
 	

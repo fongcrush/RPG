@@ -18,7 +18,7 @@ class RPG_API UInventoryTooltip : public UUserWidget
 	
 public:
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UInventorySlotWidget> SlotBeingHovered;
+	TObjectPtr<UInventorySlotWidget> SourceSlot;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> Name;
@@ -45,4 +45,5 @@ public:
 	TObjectPtr<UTextBlock> StackWeight;
 
 	virtual void NativeConstruct() override;
+	virtual void Refresh();
 };
