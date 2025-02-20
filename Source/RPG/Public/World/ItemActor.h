@@ -4,20 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Interfaces/Interface_Interaction.h"
+#include "Interfaces/Interaction.h"
 #include "ItemActor.generated.h"
 
 class UItemBase;
 
 UCLASS()
-class RPG_API AItemActor : public AActor, public IInterface_Interaction
+class RPG_API AItemActor : public AActor, public IInteraction
 {
 	GENERATED_BODY()
 	
 public:
 	AItemActor();
 	void Initialize();
-	void InitializeDrop(const TObjectPtr<UItemBase>& DropItem, int32 InQuantity);
+	void InitializeDrop(const TObjectPtr<UItemBase>& ItemDropped, int32 InQuantity);
 
 	virtual void BeginFocus() override { if (PickupMesh) PickupMesh->SetRenderCustomDepth(true); }
 	virtual void EndFocus() override { if (PickupMesh) PickupMesh->SetRenderCustomDepth(false); }
@@ -34,6 +34,9 @@ protected:
 	TObjectPtr<UStaticMeshComponent> PickupMesh;
 	
 	UPROPERTY(EditAnywhere, meta=(BlueprintBaseOnly))
+	TSubclassOf<UItemBase> ItemClass;
+	
+	UPROPERTY()
 	TObjectPtr<UItemBase> Item;
 	
 	UPROPERTY(EditAnywhere, meta=(ClampMin = 1))

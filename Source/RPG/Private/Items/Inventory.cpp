@@ -9,7 +9,7 @@
 // User Defined
 #include "Components/ScrollBox.h"
 #include "RPG/RPG.h"
-#include "UIs/MainInventoryMenu.h"
+#include "UIs/InventoryMenu.h"
 #include "UIs/RPGHUD.h"
 #include "UIs/Inventory/InventoryWidget.h"
 
@@ -18,40 +18,56 @@ UInventory::UInventory()
 {
 }
 
-void UInventory::Initialize()
+void UInventory::Use(AActor* Owner)
 {
-	Super::Initialize();
-	InventoryStaticData = StructCast<FInventoryStaticData>(StaticData);
-}
-
-void UInventory::Use(ARPGCharacter* Character)
-{
-	Super::Use(Character);
-	if (!InventoryWidget)
+	Super::Use(Owner);
+	if (!Posses() || bIsOwned)
 	{
-		if (!InventoryStaticData)
-		{
-			LOG_CALLINFO("인벤토리 정적 데이터가 할당되지 않았습니다.");
-			return;
-		}
-		InitializeWidget();
-		ReloadItems();
+		return;
 	}
-	MainInventoryMenu->InventoryWidgets.AddUnique(InventoryWidget);
 	InventoryWidget->SetVisibility(ESlateVisibility::Visible);
 }
 
-void UInventory::InitializeWidget()
+bool UInventory::Posses()
 {
+	if (!InventoryWidget)
+	{
+		InventoryStaticData = StaticDataHandle.GetRow<FInventoryStaticData>(GetName());
+		if (!InventoryStaticData)
+		{
+			LOG_CALLINFO("인벤토리 정적 데이터가 할당되지 않았습니다.");
+			return false;
+		}
+		if (!InitializeWidget())
+		{
+			LOG_CALLINFO_WARNING("인번토리 위젯 초기화에 실패했습니다. 정적 데이터의 위젯 클래스가 할당되지 않았습니다.");
+		}
+		ReloadItems();
+	}
+	if (!GetInventoryPanel()->HasChild(InventoryWidget))
+	{
+		GetInventoryPanel()->AddChild(InventoryWidget);
+	}
+	InventoryMenu->InventoryWidgets.AddUnique(InventoryWidget);
+	bIsOwned = true;
+	return true;
+}
+
+bool UInventory::InitializeWidget()
+{
+	if (InventoryStaticData->InventoryWidgetClass)
+	{
+		return false;
+	}
 	const APlayerController* const& PlayerController = GetWorld()->GetFirstPlayerController<APlayerController>();
-	MainInventoryMenu = Cast<ARPGHUD>(PlayerController->GetHUD())->MainInventoryMenu;
-	UScrollBox* InventoryPanel = MainInventoryMenu->InventoryPanel;
+	InventoryMenu = Cast<ARPGHUD>(PlayerController->GetHUD())->InventoryMenu;
 	InventoryWidget = CreateWidget<UInventoryWidget>(GetWorld(), InventoryStaticData->InventoryWidgetClass);
 	if (InventoryWidget)
 	{
-		// InventoryWidget->AddToViewport();
-		InventoryPanel->AddChild(InventoryWidget);
+		InventoryMenu->InventoryPanel->AddChild(InventoryWidget);
+		InventoryMenu->InventoryWidgets.Add(InventoryWidget);
 	}
+	return true;
 }
 
 void UInventory::ReloadItems()
@@ -69,8 +85,10 @@ void UInventory::ReloadItems()
 void UInventory::Drop(AActor* Owner, const int32 QuantityToDrop)
 {
 	Super::Drop(Owner, QuantityToDrop);
-	MainInventoryMenu->InventoryWidgets.Remove(InventoryWidget);
 	InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+	InventoryMenu->InventoryPanel->RemoveChild(InventoryWidget);
+	InventoryMenu->InventoryWidgets.Remove(InventoryWidget);
+	bIsOwned = false;
 }
 
 UInventorySlotWidget* UInventory::FindSlot(const UItemBase* const& SearchingItem) const
@@ -146,23 +164,32 @@ TArray<SlotWidgetPtr> UInventory::GetSlots() const
 	return InventoryWidget->Slots;
 }
 
-bool UInventory::AddStack(UItemBase* const& Item, const int32& Quantity)
+int32 UInventory::AddStack(UItemBase* const& Item, const int32& Quantity)
 {
-	if (!Item)
-	{
-		LOG_CALLINFO_WARNING("유효한 아이템이 아닙니다.")
-		return false;
-	}
 	if (UInventorySlotWidget* const& EmptySlot = FindEmptySlot())
 	{
+		const int32 QuantityCanAdd = FMath::Min(Quantity, Item->GetMaxSize());
 		UItemBase* NewItem = DuplicateObject<UItemBase>(Item, this);
 		EmptySlot->Item = Item;
-		EmptySlot->Quantity = Quantity;
+		EmptySlot->Quantity = QuantityCanAdd;
 		EmptySlot->Refresh();
-		return true;
+		return QuantityCanAdd;
 	}
 	LOG_WARNING("인벤토리에 빈 슬롯이 없습니다.");
-	return false;
+	return ADD_FAIL;
+}
+
+int32 UInventory::AddExisting(UItemBase* const& Item, const int32& Quantity)
+{
+	if (UInventorySlotWidget* const& NoneFullSlot = FindNoneFullSlot(Item))
+	{
+		const int32 QuantityAdded = FMath::Min(NoneFullSlot->GetEmptySize(), Quantity);
+		NoneFullSlot->Quantity += QuantityAdded;
+		NoneFullSlot->Refresh();
+		return QuantityAdded;
+	}
+	LOG_WARNING("인벤토리에 빈 슬롯이 없습니다.");
+	return ADD_FAIL;
 }
 
 bool UInventory::RemoveExisting(UItemBase* Item)

@@ -28,29 +28,29 @@ void AItemActor::BeginPlay()
 
 void AItemActor::Initialize()
 {
-	if (!Item)
+	if (!ItemClass)
 	{
-		LOG_ERROR("%s: ItemClass is nullptr", *GetName());
+		LOG_WARNING("%s: ItemClass is nullptr", *GetName());
 		return;
 	}
+	Item = ItemClass->GetDefaultObject<UItemBase>();
 	PickupMesh->SetStaticMesh(Item->GetStaticData()->AssetData.Mesh);
 	UpdateInteractableData();
 }
 
-void AItemActor::InitializeDrop(const TObjectPtr<UItemBase>& DropItem, int32 InQuantity)
+void AItemActor::InitializeDrop(const TObjectPtr<UItemBase>& ItemDropped, int32 InQuantity)
 {
-	// TODO: 호출쪽에서 DropItem를 CDO/Instance 복사본 중 어떤 걸로 넘겨줄지, 수량 전부/일부에 따라서 결정해야 함 
-	if (!DropItem)
+	if (!ItemDropped)
 	{
 		LOG_ERROR("%s: DropItem is nullptr", *GetName());
 		return;
 	}
 	
-	Item = DropItem;
+	ItemClass = ItemDropped->GetClass();
+	Item = ItemClass->GetDefaultObject<UItemBase>();
 	Quantity = InQuantity;
-
-	PickupMesh->SetStaticMesh(DropItem->GetStaticData()->AssetData.Mesh);
-
+	
+	PickupMesh->SetStaticMesh(ItemDropped->GetStaticData()->AssetData.Mesh);
 	UpdateInteractableData();
 }
 
@@ -58,7 +58,7 @@ void AItemActor::UpdateInteractableData()
 {
 	if (!Item)
 	{
-		LOG_ERROR("%s: ItemClass is nullptr", *GetName());
+		LOG_ERROR("%s: Item is nullptr", *GetName());
 		return;
 	}
 	if (FItemStaticBase* StaticData = Item->GetStaticData())
@@ -109,12 +109,13 @@ void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 void AItemActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-
 	const FName ChangedPropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.GetPropertyName() : NAME_None;
-	if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(FDataTableRowHandle, RowName))
+	if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(AItemActor, ItemClass))
 	{
-		if (FItemStaticBase* ItemData = Item->GetStaticData())
+		UItemBase* ItemCDO = ItemClass.Get()->GetDefaultObject<UItemBase>();
+		if (FItemStaticBase* ItemData = ItemCDO->StaticDataHandle.GetRow<FItemStaticBase>(GetName()))
 		{
+			LOG_CALLINFO("ItemActor: %s PostEditChangeProperty", *GetName());
 			PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);
 
 			// DataTable에서 RowName이 변경되어도 Handle이 가리키는 RowName은 바뀌지가 않아서 수동 변경 해줘야 함

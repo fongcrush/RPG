@@ -4,12 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "ItemBase.h"
+#include "Components/ScrollBox.h"
+#include "UIs/InventoryMenu.h"
 #include "Inventory.generated.h"
 
-class UMainInventoryMenu;
+class UInventoryMenu;
 class UInventorySlotWidget;
 class UInventoryWidget;
 class ARPGCharacter;
+
+#define ADD_FAIL -1
 
 /**
  * 
@@ -24,13 +28,14 @@ public:
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UInventory();
-	virtual void Initialize() override;
-	virtual void Use(ARPGCharacter* Character) override;
-	virtual void InitializeWidget();
+	virtual void Use(AActor* Owner) override;
+	virtual bool Posses();
+	virtual bool InitializeWidget();
 	virtual void ReloadItems();
 	virtual void Drop(AActor* Owner, const int32 QuantityToDrop) override;
 	
-	bool AddStack(UItemBase* const& Item, const int32& Quantity);
+	int32 AddStack(UItemBase* const& Item, const int32& Quantity);
+	int32 AddExisting(UItemBase* const& Item, const int32& Quantity);
 	bool RemoveExisting(UItemBase* Item);
 	int32 RemoveQuantity(UItemBase* Item, const int32 Quantity);
 
@@ -54,17 +59,18 @@ protected:
 	TObjectPtr<UInventoryWidget> InventoryWidget;
 
 	UPROPERTY()
-	UMainInventoryMenu* MainInventoryMenu;
-
+	UInventoryMenu* InventoryMenu;
+	
 	FInventoryStaticData* InventoryStaticData;
+
+	UPROPERTY()
+	bool bIsOwned;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	void SwapItems(UItemBase* ItemA, UItemBase* ItemB) const;
-	
-	FORCEINLINE FInventoryStaticData* GetBagStaticData() const { return InventoryStaticData; }
 	FORCEINLINE TArray<TObjectPtr<UInventorySlotWidget>> GetSlots() const;
+	FORCEINLINE UPanelWidget* GetInventoryPanel() const { return InventoryMenu ? InventoryMenu->InventoryPanel : nullptr; }
 };
-
 using InventoryPtr = TObjectPtr<UInventory>;

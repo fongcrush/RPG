@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "Interfaces/Interface_Interaction.h"
+#include "Interfaces/Interaction.h"
 #include "RPGHUD.generated.h"
 
 class UInteractionWidget;
-class UMainInventoryMenu;
+class UInventoryMenu;
 
 /**
  * 
@@ -23,10 +23,10 @@ public:
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
-	TSubclassOf<UMainInventoryMenu> MainInventoryMenuClass;
+	TSubclassOf<UInventoryMenu> InventoryMenuClass;
 	
 	UPROPERTY()
-	TObjectPtr<UMainInventoryMenu> MainInventoryMenu;
+	TObjectPtr<UInventoryMenu> InventoryMenu;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 	TSubclassOf<UInteractionWidget> InteractionWidgetClass;

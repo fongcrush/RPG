@@ -2,7 +2,7 @@
 
 
 #include "Framework/RPGCharacter.h"
-#include "Interfaces/Interface_Interaction.h"
+#include "Interfaces/Interaction.h"
 #include "UIs/RPGHUD.h"
 
 // UE
@@ -20,9 +20,6 @@ ARPGCharacter::ARPGCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	InteractionCheckFrequency = 0.1f;
-	InteractionCheckDistance = 225.f;
 
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
 
@@ -50,14 +47,14 @@ ARPGCharacter::ARPGCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
+	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
+	BaseEyeHeight = 74.f;	
+
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("PlayerInventory"));
 	InventoryComponent->SetWeightCapacity(200.f);
 
 	InteractionCheckFrequency = 0.1f;
-	InteractionCheckDistance = 175.f;
-
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
-	BaseEyeHeight = 74.f;	
+	InteractionCheckDistance = 225.f;
 }
 
 // Called to bind functionality to input
@@ -101,60 +98,67 @@ void ARPGCharacter::ToggleMenu()
 	HUD->ToggleMenu();
 }
 
-void ARPGCharacter::UpdateInteractionWidget() const
+void ARPGCharacter::Tick(float DeltaTime)
 {
-	HUD->UpdateInteractionWidget(TargetInteractable->GetInteractableData());
+	Super::Tick(DeltaTime);
+	// 상호작용 체크
+	if (GetWorld()->TimeSince(LastInteractionCheckTime) > InteractionCheckFrequency)
+	{
+		PerformInteractionCheck();
+	}
+}
+
+void ARPGCharacter::BeginInteract()
+{
+	PerformInteractionCheck();
+
+	if (!IsValid(TargetInteractable.GetObject()) || !CurrentInteractable)
+	{
+		return;
+	}
+	
+	TargetInteractable->BeginInteract();
+
+	if (FMath::IsNearlyZero(TargetInteractable->GetInteractableData().InteractionDuration))
+	{
+		Interact();
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(
+			InteractionTimerHandle,
+			this,
+			&ARPGCharacter::Interact,
+			TargetInteractable->GetInteractableData().InteractionDuration,
+			false
+		);
+	}
 }
 
 void ARPGCharacter::PerformInteractionCheck()
 {
-	InteractionData.LastInteractionCheckTime = GetWorld()->GetTimeSeconds();
-
-	const float LookDirection = FVector::DotProduct(GetActorForwardVector(), GetViewRotation().Vector());
-	if (LookDirection > 0)
+	LastInteractionCheckTime = GetWorld()->GetTimeSeconds();
+	
+	// 카메라 방향과 캐릭터 전방이 일치하는지
+	if (FVector::DotProduct(GetActorForwardVector(), GetViewRotation().Vector()) <= 0)
 	{
-		const FVector TraceStart{GetPawnViewLocation()};
-		const FVector TraceEnd{TraceStart + (GetViewRotation().Vector() * InteractionCheckDistance)};
-		
-		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 1.0f, 0, 2.0f);
-
-		FCollisionQueryParams CollisionQueryParams;
-		CollisionQueryParams.AddIgnoredActor(this);
-
-		if (FHitResult TraceHit; GetWorld()->LineTraceSingleByChannel(TraceHit, TraceStart, TraceEnd, ECC_Visibility, CollisionQueryParams))
-		{
-			if (TraceHit.GetActor()->GetClass()->ImplementsInterface(UInterface_Interaction::StaticClass()))
-			{
-				if (TraceHit.GetActor() != InteractionData.CurrentInteractable)
-				{
-					FoundInteractable(TraceHit.GetActor());
-				}
-				return;
-			}
-		}
+		NoInteractableFound();
+		return;
 	}
 
-	NoInteractableFound();
-}
-
-void ARPGCharacter::FoundInteractable(AActor* NewInteractable)
-{
-	if (IsInteracting())
+	// 트레이싱 설정
+	const FVector TraceStart{GetPawnViewLocation()};
+	const FVector TraceEnd{TraceStart + (InteractionCheckDistance * GetViewRotation().Vector())};
+	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 1.0f, 0, 2.0f);
+	
+	FCollisionQueryParams CollisionQueryParams;
+	CollisionQueryParams.AddIgnoredActor(this);
+	
+	FHitResult TraceHit; // 라인 트레이싱
+	if ( GetWorld()->LineTraceSingleByChannel(TraceHit,	TraceStart,	TraceEnd, ECC_Visibility, CollisionQueryParams))
 	{
-		EndInteract();
+		FoundInteractable(TraceHit.GetActor());
 	}
-
-	if (InteractionData.CurrentInteractable)
-	{
-		TargetInteractable = InteractionData.CurrentInteractable;
-		TargetInteractable->EndFocus();
-	}
-
-	InteractionData.CurrentInteractable = NewInteractable;
-	TargetInteractable = NewInteractable;
-
-	UpdateInteractionWidget();
-	TargetInteractable->BeginFocus();
 }
 
 void ARPGCharacter::NoInteractableFound()
@@ -163,51 +167,51 @@ void ARPGCharacter::NoInteractableFound()
 	{
 		GetWorldTimerManager().ClearTimer(InteractionTimerHandle);
 	}
-
-	if (InteractionData.CurrentInteractable)
-	{
-		if (IsValid(TargetInteractable.GetObject()))
-		{
-			TargetInteractable->EndFocus();
-			EndInteract();
-		}
-
-		HUD->HideInteractionWidget();
-		
-		InteractionData.CurrentInteractable = nullptr;
-		TargetInteractable = nullptr;
-	}
 	
-}
-
-void ARPGCharacter::BeginInteract()
-{
-	PerformInteractionCheck();
-
-	if (!InteractionData.CurrentInteractable)
-	{
+	if (!CurrentInteractable)
 		return;
-	}
 	
 	if (IsValid(TargetInteractable.GetObject()))
 	{
-		TargetInteractable->BeginInteract();
-
-		if (FMath::IsNearlyZero(TargetInteractable->GetInteractableData().InteractionDuration, 0.1f))
-		{
-			Interact();
-		}
-		else
-		{
-			GetWorldTimerManager().SetTimer(InteractionTimerHandle,
-				this,
-				&ARPGCharacter::Interact,
-				TargetInteractable->GetInteractableData().InteractionDuration,
-				false);
-		}
+		TargetInteractable->EndFocus();
+		EndInteract();
 	}
+	HUD->HideInteractionWidget();
+	
+	CurrentInteractable = nullptr;
+	TargetInteractable = nullptr;
 }
 
+void ARPGCharacter::FoundInteractable(AActor* Target)
+{
+	// 같은 오브젝트 거나 상호작용 오브젝트가 아닌 경우
+	if (Target == CurrentInteractable || !Target->Implements<UInteraction>())
+	{
+		return;
+	}
+	// 이미 상호작용 중
+	if (IsInteracting())
+	{
+		EndInteract();
+	}
+	
+	if (CurrentInteractable)
+	{
+		TargetInteractable = CurrentInteractable;
+		TargetInteractable->EndFocus();
+	}
+
+	CurrentInteractable = Target;
+	TargetInteractable = Target;
+
+	UpdateInteractionWidget();
+	TargetInteractable->BeginFocus();
+}
+
+void ARPGCharacter::UpdateInteractionWidget() const
+{
+	HUD->UpdateInteractionWidget(TargetInteractable->GetInteractableData());
+}
 
 void ARPGCharacter::EndInteract()
 {
@@ -229,26 +233,15 @@ void ARPGCharacter::Interact()
 	}
 }
 
-// Called every frame
-void ARPGCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (GetWorld()->TimeSince(InteractionData.LastInteractionCheckTime) > InteractionCheckFrequency)
-	{
-		PerformInteractionCheck();
-	}
-}
-
 void ARPGCharacter::Move(const FInputActionValue& Value)
 {
-	const FVector2D MoveVector = Value.Get<FVector2D>();
-
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	
+	const FVector2D MoveVector = Value.Get<FVector2D>();
 	AddMovementInput(ForwardDirection, MoveVector.Y);
 	AddMovementInput(RightDirection, MoveVector.X);
 }
@@ -256,7 +249,6 @@ void ARPGCharacter::Move(const FInputActionValue& Value)
 void ARPGCharacter::Look(const FInputActionValue& Value)
 {
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
-
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
 }

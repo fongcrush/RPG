@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Interfaces/Interface_Interaction.h"
+#include "Interfaces/Interaction.h"
 #include "InteractionActor.generated.h"
 
 class ARPGCharacter;
 
 UCLASS()
-class RPG_API AInteractionActor : public AActor, public IInterface_Interaction
+class RPG_API AInteractionActor : public AActor, public IInteraction
 {
 	GENERATED_BODY()
 

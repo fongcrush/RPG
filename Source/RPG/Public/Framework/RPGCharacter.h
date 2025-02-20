@@ -9,28 +9,14 @@
 
 class UItemBase;
 class UInventoryComponent;
-class IInterface_Interaction;
+class IInteraction;
 class USpringArmComponent;
 class UCameraComponent;
 class ARPGHUD;
 class UInputMappingContext;
 class UInputAction;
 
-USTRUCT()
-struct FInteractionData
-{
-	GENERATED_BODY()
-
-	FInteractionData() : CurrentInteractable(nullptr), LastInteractionCheckTime(0.0f) {}
-	
-	UPROPERTY()
-	AActor* CurrentInteractable;
-	
-	UPROPERTY()
-	float LastInteractionCheckTime;
-};
-
-UCLASS()
+UCLASS(meta=(PrioritizeCategories="Character Input"))
 class RPG_API ARPGCharacter : public ACharacter
 {
 	GENERATED_BODY()
@@ -70,25 +56,31 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	float TurnRateGamepad;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = true))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = true))
 	TObjectPtr<UCameraComponent> FollowCamera;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Character")
-	TScriptInterface<IInterface_Interaction> TargetInteractable;
+	TScriptInterface<IInteraction> TargetInteractable;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Character")
 	TObjectPtr<UInventoryComponent> InventoryComponent;
+	
+	UPROPERTY()
+	AActor* CurrentInteractable;
 
+	UPROPERTY()
+	float LastInteractionCheckTime;
+	
+	UPROPERTY()
 	float InteractionCheckFrequency;
 
+	UPROPERTY()
 	float InteractionCheckDistance;
 
 	FTimerHandle InteractionTimerHandle;
-
-	FInteractionData InteractionData;
 
 	// Input Mapping
 	UPROPERTY(EditAnywhere, Category = "Input")
@@ -116,8 +108,8 @@ protected:
 	virtual void BeginPlay() override;
 	
 	void PerformInteractionCheck();
-	void FoundInteractable(AActor* NewInteractable);
 	void NoInteractableFound();
+	void FoundInteractable(AActor* Target);
 	void BeginInteract();
 	void EndInteract();
 	void Interact();
@@ -125,6 +117,6 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	
-	void ToggleMenu();	
+	void ToggleMenu();
 #pragma endregion
 };

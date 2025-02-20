@@ -3,10 +3,8 @@
 
 #include "Components/InventoryComponent.h"
 
-#include "RPG/RPG.h"
 #include "Items/Inventory.h"
 #include "Items/ItemBase.h"
-#include "UIs/MainInventoryMenu.h"
 #include "UIs/RPGHUD.h"
 #include "UIs/Inventory/InventoryWidget.h"
 
@@ -18,24 +16,32 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::PostInitProperties()
 {
 	Super::PostInitProperties();
-	if (Inventories.IsEmpty())
+	// 기본 인벤토리 클래스가 설정되지 않았을 경우 기본값 설정
+	if (DefaultInventoryClasses.IsEmpty())
 	{
-		// TODO: 디폴트 메인 인벤토리 바인딩
-		// Inventories.Add()
+		const auto DefaultWidgetPath = TEXT("/Script/Engine.Blueprint'/Game/Item/DefaultInventory.DefaultInventory'");
+		UClass* WidgetClass = LoadClass<UInventoryWidget>(nullptr, DefaultWidgetPath);
+		DefaultInventoryClasses.Add(WidgetClass);
 	}
 }
 
 void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	// 미리 설정된 인벤토리 생성
 	if (const ARPGHUD* HUD = Cast<ARPGHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
 	{
-		HUD->MainInventoryMenu->InventoryWidgets.Add(Inventories[0]->GetInventoryWidget());
+		for (auto& InventoryClass : DefaultInventoryClasses)
+		{
+			UInventory* Inventory = NewObject<UInventory>(this, InventoryClass);
+			Inventory->Posses();
+		}
 	}
 }
 
-FItemAddResult UInventoryComponent::HandleAddItem(UItemBase* Item, const int32& Quantity)
+FItemAddResult UInventoryComponent::HandleAddItem(UItemBase* const& Item, const int32& Quantity)
 {
+	// 아이템 개수가 유효한지
 	if (Quantity <= 0)
 	{
 		return FItemAddResult::AddedNone(FText::Format(FText::FromString(
@@ -50,82 +56,88 @@ FItemAddResult UInventoryComponent::HandleAddItem(UItemBase* Item, const int32& 
 	return HandleAddNoneStackable(Item);
 }
 
-FItemAddResult UInventoryComponent::HandleAddStackable(UItemBase* Item, const int32 Quantity)
+FItemAddResult UInventoryComponent::HandleAddStackable(UItemBase* const& Item, const int32& Quantity)
 {
 	const int32 QuantityCanWeight = FMath::Min(Quantity, FMath::FloorToInt(WeightCapacity - GetTotalWeight() / Item->GetWeight()));
-
-	// 기존 스택 중 자리가 남은 스택부터 채우기
-	int32 InventoryIndex = 0;
 	int32 LeftQuantity = QuantityCanWeight;
-	while (InventoryIndex < Inventories.Num())
-	{
-		if (UInventorySlotWidget* const& NoneFullSlot = Inventories[InventoryIndex]->FindNoneFullSlot(Item))
-		{
-			const int32 QuantityAdded = FMath::Min(NoneFullSlot->GetEmptySize(), LeftQuantity);
-			NoneFullSlot->Quantity += QuantityAdded;
-			NoneFullSlot->Refresh();
-			
-			LeftQuantity -= QuantityAdded;
-		}
-		else
-		{
-			++InventoryIndex;
-		}
-	}
-	// 빈 슬롯에 나머지 추가
-	InventoryIndex = 0;
-	while (InventoryIndex < Inventories.Num())
-	{
-		int32 NewItemQuantity = FMath::Min(LeftQuantity, Item->GetMaxSize());
-		if (Inventories[InventoryIndex]->AddStack(Item, NewItemQuantity))
-		{
-			LeftQuantity -= NewItemQuantity;
-			if (LeftQuantity <= 0)
-			{
-				break;
-			}
-		}
-		else
-		{
-			++InventoryIndex;
-		}
-	}
+	HandleAddToExistingStack(Item, LeftQuantity);
+	HandleAddToEmptySlot(Item, LeftQuantity);
+	
+	const FText& ItemName = Item->GetStaticData()->Name;
 	// 모두 추가 성공
 	if (QuantityCanWeight == Quantity)
 	{
 		return FItemAddResult::AddedAll(Quantity, FText::Format(FText::FromString(
-			TEXT("인벤토리에 {0}를 {1}개 추가했습니다.")), Item->GetStaticData()->Name, Quantity));
+			TEXT("인벤토리에 {0}를 {1}개 추가했습니다.")), ItemName, Quantity));
 	}
 	// 일부만 추가 성공
 	if (QuantityCanWeight < Quantity && QuantityCanWeight > 0)
 	{
 		return FItemAddResult::AddedPartial(Quantity, LeftQuantity, FText::Format(FText::FromString(
-			TEXT("인벤토리에 {0}를 {1}개 중 {2}개 추가했습니다.")),Item->GetStaticData()->Name, Quantity, QuantityCanWeight));
+			TEXT("인벤토리에 {0}를 {1}개 중 {2}개 추가했습니다.")),ItemName, Quantity, QuantityCanWeight));
 	}
 	// 중량 초과
 	if (QuantityCanWeight <= 0)
 	{
 		return FItemAddResult::AddedNone(FText::Format(FText::FromString(
-			TEXT("인벤토리에 {0}를 추가할수 없습니다. 중량 한도를 초과합니다.")), Item->GetStaticData()->Name));
+			TEXT("인벤토리에 {0}를 추가할수 없습니다. 중량 한도를 초과합니다.")), ItemName));
 	}
 	// 알 수 없는 에러
 	return FItemAddResult::AddedNone(FText::Format(FText::FromString(
-		TEXT("인벤토리에 {0}를 추가할수 없습니다. 알 수 없는 에러 입니다.")), Item->GetStaticData()->Name));
+		TEXT("인벤토리에 {0}를 추가할수 없습니다. 알 수 없는 에러 입니다.")), ItemName));
 }
 
-FItemAddResult UInventoryComponent::HandleAddNoneStackable(UItemBase* Item) const
+void UInventoryComponent::HandleAddToExistingStack(UItemBase* const& Item, int32& LeftQuantity)
 {
-	UInventory* CurrentInventory = nullptr;
+	int32 InventoryIndex = 0;
+	while (InventoryIndex < Inventories.Num())
+	{
+		const int32 QuantityAdded = Inventories[InventoryIndex]->AddExisting(Item, LeftQuantity);
+		if (QuantityAdded != ADD_FAIL)
+		{
+			LeftQuantity -= QuantityAdded;
+			if (LeftQuantity <= 0)
+				break;
+		}
+		else
+		{
+			++InventoryIndex;
+		}
+	}
+}
+
+void UInventoryComponent::HandleAddToEmptySlot(UItemBase* const& Item, int32& LeftQuantity)
+{
+	int32 InventoryIndex = 0;
+	while (InventoryIndex < Inventories.Num())
+	{
+		const int32 QuantityAdded = Inventories[InventoryIndex]->AddStack(Item, LeftQuantity);
+		if (QuantityAdded != ADD_FAIL)
+		{
+			LeftQuantity -= QuantityAdded;
+			if (LeftQuantity <= 0)
+				break;
+		}
+		else
+		{
+			++InventoryIndex;
+		}
+	}
+}
+
+FItemAddResult UInventoryComponent::HandleAddNoneStackable(UItemBase* const& Item) const
+{
+	UInventory* TargetInventory = nullptr;
 	for (const InventoryPtr& Inventory : Inventories)
 	{
 		if (Inventory->FindEmptySlot())
 		{
-			CurrentInventory = Inventory;
+			TargetInventory = Inventory;
 			break;
 		}
 	}
 	// 인벤토리가 가득 참
-	if (!CurrentInventory)
+	if (!TargetInventory)
 	{
 		return FItemAddResult::AddedNone(FText::Format(FText::FromString(
 			TEXT("인벤토리에 {0}를 추가할수 없습니다. 인벤토리가 가득 찼습니다.")), Item->GetStaticData()->Name));
@@ -136,8 +148,9 @@ FItemAddResult UInventoryComponent::HandleAddNoneStackable(UItemBase* Item) cons
 		return FItemAddResult::AddedNone(FText::Format(FText::FromString(
 			TEXT("인벤토리에 {0}를 추가할수 없습니다. 너무 무겁습니다.")), Item->GetStaticData()->Name));
 	}
+	
 	// 아이템 추가
-	if (CurrentInventory->AddStack(Item, 1))
+	if (TargetInventory->AddStack(Item, 1))
 	{
 		return FItemAddResult::AddedAll(1, FText::Format(FText::FromString(
 			TEXT("인벤토리에 {0} 를 추가했습니다.")), Item->GetStaticData()->Name));
@@ -157,7 +170,7 @@ float UInventoryComponent::GetTotalWeight() const
 	return TotalWeight;
 }
 
-TArray<UItemBase*> UInventoryComponent::GetContents() const
+TArray<UItemBase*> UInventoryComponent::GetItems() const
 {
 	TArray<ItemPtr> AllContents;
 	for (const InventoryPtr& SubInventory : Inventories)

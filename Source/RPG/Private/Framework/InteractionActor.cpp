@@ -55,6 +55,6 @@ void AInteractionActor::EndInteract()
 
 void AInteractionActor::Interact(ARPGCharacter* const& InteractionCharacter)
 {
-	IInterface_Interaction::Interact(InteractionCharacter);
+	IInteraction::Interact(InteractionCharacter);
 }
 

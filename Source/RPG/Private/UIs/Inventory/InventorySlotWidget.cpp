@@ -47,15 +47,12 @@ void UInventorySlotWidget::Drop(const int32& QuantityDropped)
 	{
 		LOG_CALLINFO("슬롯에 아이템이 없습니다.")
 	}
-	AActor* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
-	if (Quantity <= QuantityDropped)
+	AActor* Owner = GetWorld()->GetFirstPlayerController()->GetPawn();
+	UItemBase::GetValidItem(Item)->Drop(Owner, Quantity);
+	Quantity = FMath::Max(0, Quantity - QuantityDropped);
+	if (Quantity == 0)
 	{
-		Item->Drop(Player, QuantityDropped);
 		Item = nullptr;
-	}
-	else
-	{
-		UItemBase::GetValidItem(Item)->Drop(Player, Quantity);
 	}
 	Refresh();
 }

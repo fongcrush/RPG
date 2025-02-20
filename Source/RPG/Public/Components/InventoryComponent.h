@@ -35,39 +35,18 @@ struct FItemAddResult
 
 	UPROPERTY(BlueprintReadOnly, Category = "Item Add Result")
 	int32 LeftQuantity;
-
-	FItemAddResult() :
-	ActualAmountAdded(0),
-	OperationResult(EItemAddResult::None),
-	ResultMessage(FText::GetEmpty()),
-	LeftQuantity(0)	{	}
-
+	
 	static FItemAddResult AddedNone(const FText& ErrorText)
 	{
-		FItemAddResult AddedNoneResult;
-		AddedNoneResult.ActualAmountAdded = 0;
-		AddedNoneResult.OperationResult = EItemAddResult::None;
-		AddedNoneResult.ResultMessage = ErrorText;
-		return AddedNoneResult;
+		return FItemAddResult(0, EItemAddResult::None, ErrorText, 0);
 	}
-
 	static FItemAddResult AddedPartial(const int32& PartialAmountAdded, const int32& InLeftQuantity, const FText& ErrorText)
 	{
-		FItemAddResult AddedPartialResult;
-		AddedPartialResult.ActualAmountAdded = PartialAmountAdded;
-		AddedPartialResult.OperationResult = EItemAddResult::Partial;
-		AddedPartialResult.ResultMessage = ErrorText;
-		AddedPartialResult.LeftQuantity = InLeftQuantity;
-		return AddedPartialResult;
+		return FItemAddResult(PartialAmountAdded, EItemAddResult::Partial, ErrorText, InLeftQuantity);
 	}
-
 	static FItemAddResult AddedAll(const int32& AmountAdded, const FText& ErrorText)
 	{
-		FItemAddResult AddedAllResult;
-		AddedAllResult.ActualAmountAdded = AmountAdded;
-		AddedAllResult.OperationResult = EItemAddResult::All;
-		AddedAllResult.ResultMessage = ErrorText;
-		return AddedAllResult;
+		return FItemAddResult(AmountAdded, EItemAddResult::All, ErrorText, 0);
 	}
 };
 
@@ -81,10 +60,12 @@ protected:
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 
-	/** 인덱스 0이 기본 인벤토리 */
-	UPROPERTY(VisibleInstanceOnly, Category = "Inventory")
+	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	TArray<TObjectPtr<UInventory>> Inventories;
 
+	UPROPERTY(EditAnywhere, Category = "Inventory")
+	TArray<TSubclassOf<UInventory>> DefaultInventoryClasses;
+	
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	float WeightCapacity;
 
@@ -95,21 +76,17 @@ public:
 	UInventoryComponent();
 	virtual void PostInitProperties() override;
 
+	/** 인벤토리에 아이템 추가 */
+	FItemAddResult HandleAddItem(UItemBase* const& Item, const int32& Quantity);
+
 	// Getter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UFUNCTION(Category = "Inventory")
 	FORCEINLINE float GetTotalWeight() const;
-
-	UFUNCTION(Category = "Inventory")
 	FORCEINLINE float GetWeightCapacity() const { return WeightCapacity; }
-
-	UFUNCTION(Category = "Inventory")
-	FORCEINLINE TArray<UItemBase*> GetContents() const;
+	FORCEINLINE TArray<UItemBase*> GetItems() const;
 
 	// Setter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
 	UFUNCTION(Category = "Inventory")
 	FORCEINLINE void SetWeightCapacity(const float InWeightCapacity) { WeightCapacity = InWeightCapacity; }
-
-	FItemAddResult HandleAddItem(UItemBase* Item, const int32& Quantity);
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -117,8 +94,14 @@ protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	virtual void BeginPlay() override;
 
-	FItemAddResult HandleAddNoneStackable(UItemBase* Item) const;
-	FItemAddResult HandleAddStackable(UItemBase* Item, const int32 Quantity);
+	/** 쌓을 수 있는 아이템 처리 */
+	FItemAddResult HandleAddStackable(UItemBase* const& Item, const int32& Quantity);
+	/** 이미 존재하는 스택에 추가 */
+	void HandleAddToExistingStack(UItemBase* const& Item, int32& LeftQuantity);
+	/** 빈 슬롯에 추가 */
+	void HandleAddToEmptySlot(UItemBase* const& Item, int32& LeftQuantity);
+	/** 쌓을 수 없는 아이템 처리 */
+	FItemAddResult HandleAddNoneStackable(UItemBase* const& Item) const;
 };
 
 using InventoryComponentPtr = TObjectPtr<UInventoryComponent>;

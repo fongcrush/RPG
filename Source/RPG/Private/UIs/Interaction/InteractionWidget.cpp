@@ -4,7 +4,7 @@
 #include "UIs/Interaction/InteractionWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
-#include "Interfaces/Interface_Interaction.h"
+#include "Interfaces/Interaction.h"
 
 
 void UInteractionWidget::NativeOnInitialized()
@@ -30,7 +30,7 @@ void UInteractionWidget::UpdateWidget(const FInteractableData& InteractableData)
 		KeyPressText->SetText(FText::FromString("Press"));
 		InteractionProgressBar->SetVisibility(ESlateVisibility::Collapsed);
 
-		if (InteractableData.Quantity < 2)
+		if (InteractableData.Quantity <= 1)
 		{
 			QuantityText->SetVisibility(ESlateVisibility::Collapsed);
 		}

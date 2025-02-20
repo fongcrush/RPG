@@ -21,21 +21,12 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere)
 	FDataTableRowHandle StaticDataHandle;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UItemBase();
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-	virtual void PostInitProperties() override;
-	virtual void PostLoad() override;
-	virtual void Initialize();
-	
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
 	/** 정적/동적 아이템 판별 후 CDO/Instnace 반환 */
 	template <typename T>
 	static T* GetValidItem(UItemBase* Item);
@@ -51,28 +42,22 @@ public:
 	virtual void Drop(AActor* Owner, const int32 QuantityToDrop);
 
 	// Getters
-	FORCEINLINE FItemStaticBase* GetStaticData() const { return StaticData; }
+	FORCEINLINE FItemStaticBase* GetStaticData() const { return StaticDataHandle.GetRow<FItemStaticBase>(GetName()); }
 
 	UFUNCTION(Category="Item")
-	FORCEINLINE FText GetItemName() const { return StaticData->Name; }
+	FORCEINLINE FText GetItemName() const { return GetStaticData()->Name; }
 
 	UFUNCTION(Category="Item")
-	virtual FORCEINLINE float GetWeight() const { return StaticData->Weight; }
+	virtual FORCEINLINE float GetWeight() const { return GetStaticData()->Weight; }
 
 	UFUNCTION(Category="Item")
-	FORCEINLINE int32 GetMaxSize() const { return StaticData->MaxStackSize; }
+	FORCEINLINE int32 GetMaxSize() const { return GetStaticData()->MaxStackSize; }
 
 	UFUNCTION(Category="Item")
-	FORCEINLINE bool IsStackable() const { return StaticData->bIsStackable; }
+	FORCEINLINE bool IsStackable() const { return GetStaticData()->bIsStackable; }
 
 	UFUNCTION(Category="Item")
-	virtual void Use(class ARPGCharacter* Character) {}
-
-protected:
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	VARIABLES & PROPERTIES
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	FItemStaticBase* StaticData;
+	virtual void Use(AActor* Owner) {}
 };
 
 using ItemPtr = TObjectPtr<UItemBase>;
@@ -101,15 +86,14 @@ T* UItemBase::GetValidItem(UClass* Item)
 		return nullptr;
 	}
 	
-	T* DefaultObj = Cast<T>(Item->GetDefaultObject());
-	if (!DefaultObj)
+	T* ItemCDO = Cast<T>(Item->GetDefaultObject());
+	if (!ItemCDO)
 	{
 		return nullptr;
-	}
-	
-	if (DefaultObj->Implements<UDynamicItem>())
+	}	
+	if (ItemCDO->Implements<UDynamicItem>())
 	{
-		return DuplicateObject<T>(DefaultObj, nullptr);
+		return DuplicateObject<T>(ItemCDO, nullptr);
 	}
 	return Cast<T>(Item->GetDefaultObject());
 }
