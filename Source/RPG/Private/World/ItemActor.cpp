@@ -110,7 +110,7 @@ void AItemActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	const FName ChangedPropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.GetPropertyName() : NAME_None;
-	if (ChangedPropertyName == GET_MEMBER_NAME_CHECKED(AItemActor, ItemClass))
+	if (ItemClass && ChangedPropertyName == GET_MEMBER_NAME_CHECKED(AItemActor, ItemClass))
 	{
 		UItemBase* ItemCDO = ItemClass.Get()->GetDefaultObject<UItemBase>();
 		if (FItemStaticBase* ItemData = ItemCDO->StaticDataHandle.GetRow<FItemStaticBase>(GetName()))

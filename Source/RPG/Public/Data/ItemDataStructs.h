@@ -143,10 +143,11 @@ struct FInventoryStaticData : public FItemStaticBase
 {
 	GENERATED_BODY()
 
-	FInventoryStaticData(): Width(1), Height(1)
+	FInventoryStaticData(): Width(4), Height(4)
 	{
 		Type = EItemType::Mundane;
 		Quality = EItemQuality::Normal;
+		Name = FText::FromString(TEXT("가방"));
 		Weight = 0.0f;
 		bIsStackable = false;
 		MaxStackSize = 1;
@@ -154,6 +155,9 @@ struct FInventoryStaticData : public FItemStaticBase
 		InteractionText = FText::FromString(TEXT("줍기"));
 		UsageText = FText::FromString(TEXT("가방을 엽니다."));
 		Description = FText::FromString(TEXT("가방입니다."));
+
+		const auto WidgetPath = TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UIs/WBP_DefaultInventory.WBP_DefaultInventory'");
+		InventoryWidgetClass = StaticLoadClass(UObject::StaticClass(), nullptr, WidgetPath);
 	}
 
 	UPROPERTY(EditDefaultsOnly, meta=(ClampMin = 1))

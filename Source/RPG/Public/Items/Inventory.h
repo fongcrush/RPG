@@ -19,7 +19,7 @@ class ARPGCharacter;
  * 
  */
 UCLASS()
-class RPG_API UInventory : public UItemBase
+class RPG_API UInventory : public UItemBase, public IDynamicItem
 {
 	GENERATED_BODY()
 	

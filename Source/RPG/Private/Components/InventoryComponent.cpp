@@ -19,7 +19,7 @@ void UInventoryComponent::PostInitProperties()
 	// 기본 인벤토리 클래스가 설정되지 않았을 경우 기본값 설정
 	if (DefaultInventoryClasses.IsEmpty())
 	{
-		const auto DefaultWidgetPath = TEXT("/Script/Engine.Blueprint'/Game/Item/DefaultInventory.DefaultInventory'");
+		const auto DefaultWidgetPath = TEXT("/Script/Engine.DataTable'/Game/Item/DT_Inventory.DT_Inventory'");
 		UClass* WidgetClass = LoadClass<UInventoryWidget>(nullptr, DefaultWidgetPath);
 		DefaultInventoryClasses.Add(WidgetClass);
 	}
