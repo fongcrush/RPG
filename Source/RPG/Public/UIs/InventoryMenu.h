@@ -18,14 +18,13 @@ class RPG_API UInventoryMenu : public UUserWidget
 {
 	GENERATED_BODY()
 	
+protected:
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+	
 public:
 	UPROPERTY()
 	TArray<TObjectPtr<UInventoryWidget>> InventoryWidgets;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UScrollBox> InventoryPanel;
-	
-
-protected:
-	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 };

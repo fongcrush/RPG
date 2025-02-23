@@ -6,7 +6,7 @@
 #include "Blueprint/DragDropOperation.h"
 #include "ItemDragDropOperation.generated.h"
 
-class UInventorySlotWidget;
+class UItemSlotWidget;
 class UItemBase;
 class UInventoryComponent;
 
@@ -20,7 +20,7 @@ class RPG_API UItemDragDropOperation : public UDragDropOperation
 
 public:
 	UPROPERTY()
-	TObjectPtr<UInventorySlotWidget> SourceSlotWidget;
+	TObjectPtr<UItemSlotWidget> SourceSlot;
 
 	UPROPERTY()
 	int32 Quantity;

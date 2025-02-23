@@ -7,6 +7,8 @@
 #include "Interfaces/Interaction.h"
 #include "ItemActor.generated.h"
 
+class UInventoryComponent;
+class ARPGHUD;
 class UItemBase;
 
 UCLASS()
@@ -15,16 +17,28 @@ class RPG_API AItemActor : public AActor, public IInteraction
 	GENERATED_BODY()
 	
 public:
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	FUNCTIONS
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	AItemActor();
-	void Initialize();
+	
 	void InitializeDrop(const TObjectPtr<UItemBase>& ItemDropped, int32 InQuantity);
 
-	virtual void BeginFocus() override { if (PickupMesh) PickupMesh->SetRenderCustomDepth(true); }
-	virtual void EndFocus() override { if (PickupMesh) PickupMesh->SetRenderCustomDepth(false); }
+	virtual void BeginFocus() override; 
+	virtual void EndFocus() override;
+	virtual void Interact(APawn* const& Interactor) override;
+	virtual void EndInteract() override;
+	
+	virtual FInteractableData GetInteractableData() const override { return InteractableData; }
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
+	
+protected:
+	virtual void BeginPlay() override;
+	void LoadInteractableData();
+	void TakeItem(ARPGCharacter* const& Taker);
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -42,11 +56,7 @@ protected:
 	UPROPERTY(EditAnywhere, meta=(ClampMin = 1))
 	int32 Quantity;
 
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	FUNCTIONS
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	virtual void BeginPlay() override;
-	virtual void Interact(ARPGCharacter* const& InteractionCharacter) override { if (InteractionCharacter) TakePickup(InteractionCharacter); }
-	void TakePickup(const TObjectPtr<ARPGCharacter>& Taker);
-	void UpdateInteractableData();
+	TObjectPtr<ARPGHUD> HUD;
+
+	FInteractableData InteractableData;
 };

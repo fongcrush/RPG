@@ -43,7 +43,7 @@ void ARPGHUD::HideMenu()
 	}
 }
 
-void ARPGHUD::ToggleMenu()
+bool ARPGHUD::ToggleInventory()
 {
 	if (bIsMenuVisible)
 	{
@@ -52,14 +52,17 @@ void ARPGHUD::ToggleMenu()
 		const FInputModeGameOnly InputModeGameOnly;
 		GetOwningPlayerController()->SetInputMode(InputModeGameOnly); // 게임 입력 모드로 변경
 		GetOwningPlayerController()->SetShowMouseCursor(false); // 마우스 커서 숨기기
+		return false;
 	}
 	else
 	{
 		DisplayMenu();
 		
-		const FInputModeGameAndUI InputModeGameAndUI;
-		GetOwningPlayerController()->SetInputMode(InputModeGameAndUI); // 게임과 UI 입력 모드로 변경
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(InventoryMenu->TakeWidget()).SetHideCursorDuringCapture(false);
+		GetOwningPlayerController()->SetInputMode(InputMode); // 게임과 UI 입력 모드로 변경
 		GetOwningPlayerController()->SetShowMouseCursor(true); // 마우스 커서 보이기
+		return true;
 	}
 }
 

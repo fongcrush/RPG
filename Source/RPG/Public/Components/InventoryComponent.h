@@ -6,9 +6,10 @@
 #include "Components/ActorComponent.h"
 #include "InventoryComponent.generated.h"
 
+class AItemActor;
 class UInventory;
 class UInventoryWidget;
-class UInventorySlotWidget;
+class UItemSlotWidget;
 class UItemBase;
 
 UENUM(BlueprintType)
@@ -55,11 +56,40 @@ class RPG_API UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+public:
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	FUNCTIONS
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+
+	UInventoryComponent();
+	virtual void PostInitProperties() override;
+	
+	/** 인벤토리에 아이템 추가 */
+	FItemAddResult HandleAddItem(UItemBase* const& Item, const int32& Quantity);
+
+	// Getter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	FORCEINLINE float GetMaxWeight() const { return MaxWeight; }
+	FORCEINLINE float GetTotalWeight() const;
+
+	// Setter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
+	UFUNCTION(Category = "Inventory")
+	FORCEINLINE void SetWeightCapacity(const float InWeightCapacity) { MaxWeight = InWeightCapacity; }
+
+protected:
+	virtual void BeginPlay() override;
+	/** 쌓을 수 있는 아이템 처리 */
+	FItemAddResult HandleAddStackable(UItemBase* const& Item, const int32& Quantity);
+	/** 이미 존재하는 스택에 추가 */
+	int32 HandleAddToExistingStack(UItemBase* const& Item, const int32& Quantity);
+	/** 빈 슬롯에 추가 */
+	int32 HandleAddToEmptySlot(UItemBase* const& Item, const int32& Quantity);
+	/** 쌓을 수 없는 아이템 처리 */
+	FItemAddResult HandleAddNoneStackable(UItemBase* const& Item) const;
+
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	TArray<TObjectPtr<UInventory>> Inventories;
 
@@ -67,41 +97,7 @@ protected:
 	TArray<TSubclassOf<UInventory>> DefaultInventoryClasses;
 	
 	UPROPERTY(EditAnywhere, Category = "Inventory")
-	float WeightCapacity;
-
-public:
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	FUNCTIONS
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UInventoryComponent();
-	virtual void PostInitProperties() override;
-
-	/** 인벤토리에 아이템 추가 */
-	FItemAddResult HandleAddItem(UItemBase* const& Item, const int32& Quantity);
-
-	// Getter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	FORCEINLINE float GetTotalWeight() const;
-	FORCEINLINE float GetWeightCapacity() const { return WeightCapacity; }
-	FORCEINLINE TArray<UItemBase*> GetItems() const;
-
-	// Setter 〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
-	UFUNCTION(Category = "Inventory")
-	FORCEINLINE void SetWeightCapacity(const float InWeightCapacity) { WeightCapacity = InWeightCapacity; }
-
-protected:
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	FUNCTIONS
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	virtual void BeginPlay() override;
-
-	/** 쌓을 수 있는 아이템 처리 */
-	FItemAddResult HandleAddStackable(UItemBase* const& Item, const int32& Quantity);
-	/** 이미 존재하는 스택에 추가 */
-	void HandleAddToExistingStack(UItemBase* const& Item, int32& LeftQuantity);
-	/** 빈 슬롯에 추가 */
-	void HandleAddToEmptySlot(UItemBase* const& Item, int32& LeftQuantity);
-	/** 쌓을 수 없는 아이템 처리 */
-	FItemAddResult HandleAddNoneStackable(UItemBase* const& Item) const;
+	float MaxWeight;
 };
 
 using InventoryComponentPtr = TObjectPtr<UInventoryComponent>;

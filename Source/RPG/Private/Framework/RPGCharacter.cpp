@@ -2,7 +2,6 @@
 
 
 #include "Framework/RPGCharacter.h"
-#include "Interfaces/Interaction.h"
 #include "UIs/RPGHUD.h"
 
 // UE
@@ -14,6 +13,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/InteractorComponent.h"
 
 // Sets default values
 ARPGCharacter::ARPGCharacter()
@@ -50,11 +50,12 @@ ARPGCharacter::ARPGCharacter()
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
 	BaseEyeHeight = 74.f;	
 
-	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("PlayerInventory"));
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetWeightCapacity(200.f);
 
-	InteractionCheckFrequency = 0.1f;
-	InteractionCheckDistance = 225.f;
+	InteractorComponent = CreateDefaultSubobject<UInteractorComponent>(TEXT("InteractorComponent"));
+
+	bCanLook = true;
 }
 
 // Called to bind functionality to input
@@ -69,10 +70,10 @@ void ARPGCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ARPGCharacter::BeginInteract);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ARPGCharacter::EndInteract);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, InteractorComponent.Get(), &UInteractorComponent::BeginInteract);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, InteractorComponent.Get(), &UInteractorComponent::EndInteract);
 		
-		EnhancedInputComponent->BindAction(UIToggleAction, ETriggerEvent::Triggered, this, &ARPGCharacter::ToggleMenu);
+		EnhancedInputComponent->BindAction(UIToggleAction, ETriggerEvent::Triggered, this, &ARPGCharacter::ToggleInventory);
 	}
 }
 
@@ -83,7 +84,7 @@ void ARPGCharacter::BeginPlay()
 
 	HUD = Cast<ARPGHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	if (const APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
@@ -93,144 +94,14 @@ void ARPGCharacter::BeginPlay()
 	}
 }
 
-void ARPGCharacter::ToggleMenu()
-{
-	HUD->ToggleMenu();
-}
-
 void ARPGCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	// 상호작용 체크
-	if (GetWorld()->TimeSince(LastInteractionCheckTime) > InteractionCheckFrequency)
-	{
-		PerformInteractionCheck();
-	}
 }
 
-void ARPGCharacter::BeginInteract()
+void ARPGCharacter::ToggleInventory()
 {
-	PerformInteractionCheck();
-
-	if (!IsValid(TargetInteractable.GetObject()) || !CurrentInteractable)
-	{
-		return;
-	}
-	
-	TargetInteractable->BeginInteract();
-
-	if (FMath::IsNearlyZero(TargetInteractable->GetInteractableData().InteractionDuration))
-	{
-		Interact();
-	}
-	else
-	{
-		GetWorldTimerManager().SetTimer(
-			InteractionTimerHandle,
-			this,
-			&ARPGCharacter::Interact,
-			TargetInteractable->GetInteractableData().InteractionDuration,
-			false
-		);
-	}
-}
-
-void ARPGCharacter::PerformInteractionCheck()
-{
-	LastInteractionCheckTime = GetWorld()->GetTimeSeconds();
-	
-	// 카메라 방향과 캐릭터 전방이 일치하는지
-	if (FVector::DotProduct(GetActorForwardVector(), GetViewRotation().Vector()) <= 0)
-	{
-		NoInteractableFound();
-		return;
-	}
-
-	// 트레이싱 설정
-	const FVector TraceStart{GetPawnViewLocation()};
-	const FVector TraceEnd{TraceStart + (InteractionCheckDistance * GetViewRotation().Vector())};
-	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 1.0f, 0, 2.0f);
-	
-	FCollisionQueryParams CollisionQueryParams;
-	CollisionQueryParams.AddIgnoredActor(this);
-	
-	FHitResult TraceHit; // 라인 트레이싱
-	if ( GetWorld()->LineTraceSingleByChannel(TraceHit,	TraceStart,	TraceEnd, ECC_Visibility, CollisionQueryParams))
-	{
-		FoundInteractable(TraceHit.GetActor());
-	}
-}
-
-void ARPGCharacter::NoInteractableFound()
-{
-	if (IsInteracting())
-	{
-		GetWorldTimerManager().ClearTimer(InteractionTimerHandle);
-	}
-	
-	if (!CurrentInteractable)
-		return;
-	
-	if (IsValid(TargetInteractable.GetObject()))
-	{
-		TargetInteractable->EndFocus();
-		EndInteract();
-	}
-	HUD->HideInteractionWidget();
-	
-	CurrentInteractable = nullptr;
-	TargetInteractable = nullptr;
-}
-
-void ARPGCharacter::FoundInteractable(AActor* Target)
-{
-	// 같은 오브젝트 거나 상호작용 오브젝트가 아닌 경우
-	if (Target == CurrentInteractable || !Target->Implements<UInteraction>())
-	{
-		return;
-	}
-	// 이미 상호작용 중
-	if (IsInteracting())
-	{
-		EndInteract();
-	}
-	
-	if (CurrentInteractable)
-	{
-		TargetInteractable = CurrentInteractable;
-		TargetInteractable->EndFocus();
-	}
-
-	CurrentInteractable = Target;
-	TargetInteractable = Target;
-
-	UpdateInteractionWidget();
-	TargetInteractable->BeginFocus();
-}
-
-void ARPGCharacter::UpdateInteractionWidget() const
-{
-	HUD->UpdateInteractionWidget(TargetInteractable->GetInteractableData());
-}
-
-void ARPGCharacter::EndInteract()
-{
-	GetWorldTimerManager().ClearTimer(InteractionTimerHandle);
-
-	if (IsValid(TargetInteractable.GetObject()))
-	{
-		TargetInteractable->EndInteract();
-	}
-}
-
-void ARPGCharacter::Interact()
-{
-	GetWorldTimerManager().ClearTimer(InteractionTimerHandle);
-	
-	if (IsValid(TargetInteractable.GetObject()))
-	{
-		TargetInteractable->Interact(this);
-	}
+	bCanLook = HUD->ToggleInventory();
 }
 
 void ARPGCharacter::Move(const FInputActionValue& Value)
@@ -248,7 +119,10 @@ void ARPGCharacter::Move(const FInputActionValue& Value)
 
 void ARPGCharacter::Look(const FInputActionValue& Value)
 {
-	const FVector2D LookAxisVector = Value.Get<FVector2D>();
-	AddControllerYawInput(LookAxisVector.X);
-	AddControllerPitchInput(LookAxisVector.Y);
+	if (bCanLook)
+	{
+		const FVector2D LookAxisVector = Value.Get<FVector2D>();
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
+	}
 }

@@ -8,6 +8,8 @@
 #include "Items/ItemBase.h"
 #include "RPG/RPG.h"
 #include "UIs/RPGHUD.h"
+#include "UIs/Interaction/InteractionWidget.h"
+
 
 AItemActor::AItemActor()
 {
@@ -23,19 +25,17 @@ AItemActor::AItemActor()
 void AItemActor::BeginPlay()
 {
 	Super::BeginPlay();
-	Initialize();
-}
-
-void AItemActor::Initialize()
-{
 	if (!ItemClass)
 	{
 		LOG_WARNING("%s: ItemClass is nullptr", *GetName());
 		return;
 	}
+	HUD = Cast<ARPGHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
+	
 	Item = ItemClass->GetDefaultObject<UItemBase>();
 	PickupMesh->SetStaticMesh(Item->GetStaticData()->AssetData.Mesh);
-	UpdateInteractableData();
+	
+	LoadInteractableData();
 }
 
 void AItemActor::InitializeDrop(const TObjectPtr<UItemBase>& ItemDropped, int32 InQuantity)
@@ -45,38 +45,62 @@ void AItemActor::InitializeDrop(const TObjectPtr<UItemBase>& ItemDropped, int32 
 		LOG_ERROR("%s: DropItem is nullptr", *GetName());
 		return;
 	}
+	HUD = Cast<ARPGHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
 	
-	ItemClass = ItemDropped->GetClass();
-	Item = ItemClass->GetDefaultObject<UItemBase>();
+	Item = ItemDropped;
 	Quantity = InQuantity;
-	
 	PickupMesh->SetStaticMesh(ItemDropped->GetStaticData()->AssetData.Mesh);
-	UpdateInteractableData();
+	
+	LoadInteractableData();
 }
 
-void AItemActor::UpdateInteractableData()
+void AItemActor::LoadInteractableData()
 {
-	if (!Item)
+	if (const FItemStaticBase* ItemStaticData = Item->GetStaticData())
 	{
-		LOG_ERROR("%s: Item is nullptr", *GetName());
-		return;
-	}
-	if (FItemStaticBase* StaticData = Item->GetStaticData())
-	{
+		InteractableData.Name = ItemStaticData->Name;
 		InteractableData.InteractableType = EInteractableType::Pickup;
-		InteractableData.Action = StaticData->InteractionText;
-		InteractableData.Name = StaticData->Name;
+		InteractableData.InteractionText = ItemStaticData->InteractionText;
+		InteractableData.Quantity = Quantity;
 	}
 }
 
-void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
+void AItemActor::BeginFocus()
+{
+	if (PickupMesh)
+	{
+		PickupMesh->SetRenderCustomDepth(true);
+	}
+}
+
+void AItemActor::EndFocus()
+{
+	if (PickupMesh)
+	{
+		PickupMesh->SetRenderCustomDepth(false);
+	}
+}
+
+void AItemActor::Interact(APawn* const& Interactor)
+{
+	if (ARPGCharacter* RPGCharacter = Cast<ARPGCharacter>(Interactor))
+	{
+		TakeItem(RPGCharacter);
+	}
+}
+
+void AItemActor::EndInteract()
+{
+}
+
+void AItemActor::TakeItem(ARPGCharacter* const& Taker)
 {
 	if (IsPendingKillPending())
 	{
 		LOG_CALLINFO("이미 사라진 아이템 입니다.");
 		return;
 	}
-	if (Item == nullptr)
+	if (!Item)
 	{
 		LOG_CALLINFO("유효한 아이템이 아닙니다.");
 		return;
@@ -89,20 +113,18 @@ void AItemActor::TakePickup(const TObjectPtr<ARPGCharacter>& Taker)
 	
 	// 인벤토리에 아이템 추가 및 조정
 	const FItemAddResult AddResult = Taker->GetInventoryComponent()->HandleAddItem(Item, Quantity);
-	switch (AddResult.OperationResult)
-	{
+	LOG_CALLINFO("%s", *AddResult.ResultMessage.ToString());
+	switch (AddResult.OperationResult) {
 	case EItemAddResult::None:
 		break;
 	case EItemAddResult::Partial:
-		UpdateInteractableData();
-		Taker->UpdateInteractionWidget();
-		Quantity = AddResult.LeftQuantity;
+		InteractableData.Quantity = AddResult.LeftQuantity;
+		HUD->InteractionWidget->UpdateWidget(InteractableData);
 		break;
 	case EItemAddResult::All:
-		Destroy();
+		Destroy();		
 		break;
 	}
-	LOG_CALLINFO("%s", *AddResult.ResultMessage.ToString());
 }
 
 #if WITH_EDITOR
@@ -113,7 +135,7 @@ void AItemActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 	if (ItemClass && ChangedPropertyName == GET_MEMBER_NAME_CHECKED(AItemActor, ItemClass))
 	{
 		UItemBase* ItemCDO = ItemClass.Get()->GetDefaultObject<UItemBase>();
-		if (FItemStaticBase* ItemData = ItemCDO->StaticDataHandle.GetRow<FItemStaticBase>(GetName()))
+		if (FItemStaticBase* ItemData = ItemCDO->GetStaticDataHandle().GetRow<FItemStaticBase>(GetName()))
 		{
 			LOG_CALLINFO("ItemActor: %s PostEditChangeProperty", *GetName());
 			PickupMesh->SetStaticMesh(ItemData->AssetData.Mesh);

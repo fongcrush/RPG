@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "RPGCharacter.generated.h"
 
+class UInteractorComponent;
 class UItemBase;
 class UInventoryComponent;
 class IInteraction;
@@ -16,16 +17,17 @@ class ARPGHUD;
 class UInputMappingContext;
 class UInputAction;
 
-UCLASS(meta=(PrioritizeCategories="Character Input"))
+UCLASS(PrioritizeCategories=("Character", "Inventory", "Interact", "Input"))
 class RPG_API ARPGCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
+	
 public:
 #pragma region public_functions
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	
 	ARPGCharacter();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaTime) override;
@@ -39,17 +41,21 @@ public:
 	UFUNCTION()
 	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 	
-	UFUNCTION()
-	FORCEINLINE bool IsInteracting() const { return GetWorldTimerManager().IsTimerActive(InteractionTimerHandle);}
-
-	void UpdateInteractionWidget() const;
-#pragma endregion
-	
 protected:
+#pragma endregion
+#pragma region protected_functions
+	virtual void BeginPlay() override;
+	void ToggleInventory();
+
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	
+#pragma endregion
 #pragma region protected_variables
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	
 	UPROPERTY()
 	TObjectPtr<ARPGHUD> HUD;
 
@@ -63,24 +69,10 @@ protected:
 	TObjectPtr<UCameraComponent> FollowCamera;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Character")
-	TScriptInterface<IInteraction> TargetInteractable;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Character")
 	TObjectPtr<UInventoryComponent> InventoryComponent;
-	
-	UPROPERTY()
-	AActor* CurrentInteractable;
 
-	UPROPERTY()
-	float LastInteractionCheckTime;
-	
-	UPROPERTY()
-	float InteractionCheckFrequency;
-
-	UPROPERTY()
-	float InteractionCheckDistance;
-
-	FTimerHandle InteractionTimerHandle;
+	UPROPERTY(VisibleAnywhere, Category = "Character")
+	TObjectPtr<UInteractorComponent> InteractorComponent;
 
 	// Input Mapping
 	UPROPERTY(EditAnywhere, Category = "Input")
@@ -100,23 +92,8 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> UIToggleAction;
-#pragma endregion
-#pragma region protected_functions
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	FUNCTIONS
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
-	virtual void BeginPlay() override;
-	
-	void PerformInteractionCheck();
-	void NoInteractableFound();
-	void FoundInteractable(AActor* Target);
-	void BeginInteract();
-	void EndInteract();
-	void Interact();
 
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	
-	void ToggleMenu();
+	bool bCanLook;
 #pragma endregion
+	
 };

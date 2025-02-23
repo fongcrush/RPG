@@ -9,11 +9,10 @@
 #include "Inventory.generated.h"
 
 class UInventoryMenu;
-class UInventorySlotWidget;
+class UItemSlotWidget;
 class UInventoryWidget;
 class ARPGCharacter;
-
-#define ADD_FAIL -1
+class UPanelWidget;
 
 /**
  * 
@@ -27,50 +26,33 @@ public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	// Native
+	//
 	UInventory();
+	
 	virtual void Use(AActor* Owner) override;
 	virtual bool Posses();
 	virtual bool InitializeWidget();
-	virtual void ReloadItems();
-	virtual void Drop(AActor* Owner, const int32 QuantityToDrop) override;
-	
-	int32 AddStack(UItemBase* const& Item, const int32& Quantity);
-	int32 AddExisting(UItemBase* const& Item, const int32& Quantity);
-	bool RemoveExisting(UItemBase* Item);
-	int32 RemoveQuantity(UItemBase* Item, const int32 Quantity);
+	virtual void Drop(AActor* const& Owner, const int32& QuantityToDrop) override;
 
 	// Getters
-	FORCEINLINE UInventorySlotWidget* FindSlot(const UItemBase* const& SearchingItem) const;
-	FORCEINLINE UInventorySlotWidget* FindNoneFullSlot(const UItemBase* const& SearchingItem) const;
-	FORCEINLINE UInventorySlotWidget* FindEmptySlot() const;
-	FORCEINLINE TArray<UItemBase*> GetItems() const { TArray<UItemBase*> Items; ItemSlotMap.GetKeys(Items); return Items; }
+	virtual float GetWeight() const override;
 	FORCEINLINE UInventoryWidget* GetInventoryWidget() const { return InventoryWidget; }
-	FORCEINLINE bool Contains(const UItemBase* Item) const { return ItemSlotMap.Contains(Item); }
-	FORCEINLINE virtual float GetWeight() const override;
-
+	
 protected:
+	FORCEINLINE UPanelWidget* GetInventoryMenu() const { return InventoryMenu ? InventoryMenu->InventoryPanel : nullptr; }
+	
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	UPROPERTY()
-	TMap<UItemBase*, UInventorySlotWidget*> ItemSlotMap;
-
-	UPROPERTY()
 	TObjectPtr<UInventoryWidget> InventoryWidget;
 
 	UPROPERTY()
-	UInventoryMenu* InventoryMenu;
-	
-	FInventoryStaticData* InventoryStaticData;
+	TObjectPtr<UInventoryMenu> InventoryMenu;
 
 	UPROPERTY()
 	bool bIsOwned;
-
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	FUNCTIONS
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	void SwapItems(UItemBase* ItemA, UItemBase* ItemB) const;
-	FORCEINLINE TArray<TObjectPtr<UInventorySlotWidget>> GetSlots() const;
-	FORCEINLINE UPanelWidget* GetInventoryPanel() const { return InventoryMenu ? InventoryMenu->InventoryPanel : nullptr; }
+	
+	FInventoryStaticData* InventoryStaticData;
 };
-using InventoryPtr = TObjectPtr<UInventory>;

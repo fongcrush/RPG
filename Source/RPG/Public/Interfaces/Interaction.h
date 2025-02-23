@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "Interaction.generated.h"
 
+class UInteractorComponent;
+
 UENUM()
 enum class EInteractableType : uint8
 {
@@ -28,7 +30,7 @@ struct FInteractableData
 	FText Name;
 
 	UPROPERTY(EditInstanceOnly)
-	FText Action;
+	FText InteractionText;
 
 	UPROPERTY(EditInstanceOnly)
 	int8 Quantity;
@@ -58,9 +60,6 @@ public:
 	virtual void EndFocus() {};
 	virtual void BeginInteract() {};
 	virtual void EndInteract() {};
-	virtual void Interact(ARPGCharacter* const& InteractionCharacter) {};
-	const FInteractableData& GetInteractableData() { return InteractableData; }
-
-protected:
-	FInteractableData InteractableData;
+	virtual void Interact(APawn* const& Interactor) {};
+	virtual FInteractableData GetInteractableData() const = 0;
 };

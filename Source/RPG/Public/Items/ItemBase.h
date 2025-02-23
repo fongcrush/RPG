@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "RPG/RPG.h"
 #include "Data/ItemDataStructs.h"
 #include "Interfaces/DynamicItem.h"
-#include "RPG/RPG.h"
 #include "ItemBase.generated.h"
 
-class UInventorySlotWidget;
+class UItemSlotWidget;
 class UItemBase;
 class AItemActor;
 
@@ -18,52 +18,57 @@ class RPG_API UItemBase : public UObject
 	GENERATED_BODY()
 
 public:
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	VARIABLES & PROPERTIES
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UPROPERTY(EditAnywhere)
-	FDataTableRowHandle StaticDataHandle;
-
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓	
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	virtual void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
+	virtual void PostLoad() override;
+	
 	/** 정적/동적 아이템 판별 후 CDO/Instnace 반환 */
 	template <typename T>
-	static T* GetValidItem(UItemBase* Item);
-	static UItemBase* GetValidItem(UItemBase* Item) { return GetValidItem<UItemBase>(Item); }
+	static T* GetValidItem(UItemBase* const& Item);
+	static UItemBase* GetValidItem(UItemBase* const& Item) { return GetValidItem<UItemBase>(Item); }
 
 	/** 정적/동적 아이템 판별 후 CDO/Instnace 반환 */
 	template <typename T>
-	static T* GetValidItem(UClass* Item);
-	static UItemBase* GetValidItem(UClass* Item) { return GetValidItem<UItemBase>(Item); }
+	static T* GetValidItem(UClass* const& Item);
+	static UItemBase* GetValidItem(UClass* const& Item) { return GetValidItem<UItemBase>(Item); }
 
 
 	UFUNCTION(Category="Inventory")
-	virtual void Drop(AActor* Owner, const int32 QuantityToDrop);
+	virtual void Drop(AActor* const& Owner, const int32& QuantityToDrop);
 
 	// Getters
-	FORCEINLINE FItemStaticBase* GetStaticData() const { return StaticDataHandle.GetRow<FItemStaticBase>(GetName()); }
+	UFUNCTION(Category="Item")
+	FORCEINLINE FDataTableRowHandle GetStaticDataHandle() const { return StaticDataHandle; }
+	FORCEINLINE FItemStaticBase* GetStaticData() const { return StaticData; }
 
 	UFUNCTION(Category="Item")
 	FORCEINLINE FText GetItemName() const { return GetStaticData()->Name; }
 
 	UFUNCTION(Category="Item")
-	virtual FORCEINLINE float GetWeight() const { return GetStaticData()->Weight; }
+	virtual float GetWeight() const { return GetStaticData()->Weight; }
 
 	UFUNCTION(Category="Item")
-	FORCEINLINE int32 GetMaxSize() const { return GetStaticData()->MaxStackSize; }
+	FORCEINLINE int32 GetMaxSize() const { return IsStackable() ? GetStaticData()->MaxStackSize : 1; }
 
 	UFUNCTION(Category="Item")
 	FORCEINLINE bool IsStackable() const { return GetStaticData()->bIsStackable; }
 
 	UFUNCTION(Category="Item")
 	virtual void Use(AActor* Owner) {}
+
+protected:
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	VARIABLES & PROPERTIES
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	UPROPERTY(EditAnywhere)
+	FDataTableRowHandle StaticDataHandle;
+	FItemStaticBase* StaticData;
 };
 
-using ItemPtr = TObjectPtr<UItemBase>;
-
 template <typename T>
-T* UItemBase::GetValidItem(UItemBase* Item)
+T* UItemBase::GetValidItem(UItemBase* const& Item)
 {
 	if (!Item)
 	{
@@ -72,13 +77,13 @@ T* UItemBase::GetValidItem(UItemBase* Item)
 	}
 	if (Item->Implements<UDynamicItem>())
 	{
-		return DuplicateObject<T>(Cast<T>(Item), nullptr);
+		return DuplicateObject<T>(Item, nullptr);
 	}
 	return Cast<T>(Item);
 }
 
 template <typename T>
-T* UItemBase::GetValidItem(UClass* Item)
+T* UItemBase::GetValidItem(UClass* const& Item)
 {
 	if (!Item)
 	{
@@ -97,3 +102,5 @@ T* UItemBase::GetValidItem(UClass* Item)
 	}
 	return Cast<T>(Item->GetDefaultObject());
 }
+
+using ItemPtr = TObjectPtr<UItemBase>;

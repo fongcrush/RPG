@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "InteractionWidget.generated.h"
 
+class UItemSlotWidget;
+class UItemBase;
 class ARPGCharacter;
 struct FInteractableData;
 class UTextBlock;
@@ -25,7 +27,10 @@ protected:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction Widget | Player Reference")
 	TObjectPtr<ARPGCharacter> InteractionCharacter;
-	
+
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	FUNCTIONS
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	void UpdateWidget(const FInteractableData& InteractableData);
 
 protected:
