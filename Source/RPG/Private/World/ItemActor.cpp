@@ -4,7 +4,7 @@
 #include "World/ItemActor.h"
 
 #include "Components/InventoryComponent.h"
-#include "Framework/RPGCharacter.h"
+#include "Characters/PlayerCharacter.h"
 #include "Items/ItemBase.h"
 #include "RPG/RPG.h"
 #include "UIs/RPGHUD.h"
@@ -83,7 +83,7 @@ void AItemActor::EndFocus()
 
 void AItemActor::Interact(APawn* const& Interactor)
 {
-	if (ARPGCharacter* RPGCharacter = Cast<ARPGCharacter>(Interactor))
+	if (APlayerCharacter* RPGCharacter = Cast<APlayerCharacter>(Interactor))
 	{
 		TakeItem(RPGCharacter);
 	}
@@ -93,7 +93,7 @@ void AItemActor::EndInteract()
 {
 }
 
-void AItemActor::TakeItem(ARPGCharacter* const& Taker)
+void AItemActor::TakeItem(APlayerCharacter* const& Taker)
 {
 	if (IsPendingKillPending())
 	{

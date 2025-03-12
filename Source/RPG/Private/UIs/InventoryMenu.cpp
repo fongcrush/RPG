@@ -2,7 +2,7 @@
 
 // User Defined
 #include "UIs/InventoryMenu.h"
-#include "Framework/RPGCharacter.h"
+#include "Characters/PlayerCharacter.h"
 #include "UIs/Inventory/ItemDragDropOperation.h"
 
 // UE
@@ -14,7 +14,7 @@ bool UInventoryMenu::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 	UItemDragDropOperation* const& ItemDragOperation = Cast<UItemDragDropOperation>(InOperation);
 	UItemSlotWidget* const& SourceSlotWidget = ItemDragOperation->SourceSlot;
 
-	ARPGCharacter* PlayerCharacter = Cast<ARPGCharacter>(GetOwningPlayerPawn());
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetOwningPlayerPawn());
 	if (PlayerCharacter && SourceSlotWidget)
 	{	
 		SourceSlotWidget->Drop(SourceSlotWidget->Quantity);

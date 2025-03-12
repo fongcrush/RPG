@@ -9,7 +9,7 @@
 class UScrollBox;
 class UCanvasPanel;
 class UInventoryWidget;
-class ARPGCharacter;
+class APlayerCharacter;
 /**
  * 
  */

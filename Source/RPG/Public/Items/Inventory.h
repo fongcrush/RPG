@@ -11,7 +11,7 @@
 class UInventoryMenu;
 class UItemSlotWidget;
 class UInventoryWidget;
-class ARPGCharacter;
+class APlayerCharacter;
 class UPanelWidget;
 
 /**

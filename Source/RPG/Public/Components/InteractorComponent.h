@@ -18,21 +18,23 @@ class RPG_API UInteractorComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UInteractorComponent();
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	UFUNCTION(BlueprintCallable, Category = "Character")
+	void BeginInteract();
+	
+	UFUNCTION(BlueprintCallable, Category = "Character")
+	void EndInteract();
 
 protected:
 	virtual void BeginPlay() override;
 
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
 	void PerformInteractionCheck();
 	void NoInteractableFound();
 	void FoundInteractable(AActor* Target);
-	void BeginInteract();
-	void EndInteract();
+	
 	void Interact();
 	
-	UFUNCTION()
 	FORCEINLINE bool IsInteracting() const { return GetOwner()->GetWorldTimerManager().IsTimerActive(InteractionTimerHandle);}
 
 protected:

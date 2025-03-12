@@ -22,6 +22,9 @@ public class RPG : ModuleRules
 			"AssetRegistry",
 			"Settings",
 			"FongcrushUtilities",
+			"GameplayAbilities",
+			"GameplayTags",
+			"GameplayTasks",
 		});
 
 		// Uncomment if you are using Slate UI

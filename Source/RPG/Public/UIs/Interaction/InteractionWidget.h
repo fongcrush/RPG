@@ -8,7 +8,7 @@
 
 class UItemSlotWidget;
 class UItemBase;
-class ARPGCharacter;
+class APlayerCharacter;
 struct FInteractableData;
 class UTextBlock;
 class UProgressBar;
@@ -26,7 +26,7 @@ protected:
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction Widget | Player Reference")
-	TObjectPtr<ARPGCharacter> InteractionCharacter;
+	TObjectPtr<APlayerCharacter> InteractionCharacter;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS

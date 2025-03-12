@@ -39,7 +39,7 @@ struct FInteractableData
 	float InteractionDuration;
 };
 
-class ARPGCharacter;
+class APlayerCharacter;
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)

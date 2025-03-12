@@ -43,7 +43,7 @@ public:
 	void ShowInteractionWidget() const;
 	void HideInteractionWidget() const;
 	
-	bool ToggleInventory();	
+	void ToggleInventory();	
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓

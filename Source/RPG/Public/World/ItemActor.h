@@ -38,7 +38,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	void LoadInteractableData();
-	void TakeItem(ARPGCharacter* const& Taker);
+	void TakeItem(APlayerCharacter* const& Taker);
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
