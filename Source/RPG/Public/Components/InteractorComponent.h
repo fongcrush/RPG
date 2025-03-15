@@ -18,7 +18,6 @@ class RPG_API UInteractorComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UInteractorComponent();
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION(BlueprintCallable, Category = "Character")
 	void BeginInteract();
@@ -28,6 +27,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void PerformInteractionCheck();
 	void NoInteractableFound();

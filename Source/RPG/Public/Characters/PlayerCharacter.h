@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputAction.h"
 #include "InputActionValue.h"
 #include "Framework/RPGCharacterBase.h"
 #include "PlayerCharacter.generated.h"
@@ -44,15 +45,15 @@ protected:
 #pragma endregion
 #pragma region protected_functions
 	virtual void BeginPlay() override;
-
-	UFUNCTION(BlueprintCallable, Category = "Character")
-	void Move(const FVector2D& Value);
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	
+	UFUNCTION(BlueprintCallable, Category = "Character", DisplayName = "Walk")
+	void K2_Walk(const FVector2D& Value);
+	
+	void Walk(const FInputActionInstance& Instance);
 	
 	UFUNCTION(BlueprintCallable, Category = "Character")
-	void Look(const FVector2D& Value);
-	
-	UFUNCTION(BlueprintCallable, Category = "Character")
-	void ToggleInventory();
+	void Look(const FInputActionInstance& Instance);
 	
 #pragma endregion
 #pragma region protected_variables
@@ -60,7 +61,7 @@ protected:
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<ARPGHUD> HUD;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
@@ -81,23 +82,12 @@ protected:
 	// Input Mapping
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
-	
-	UPROPERTY(EditAnywhere, Category = "Input")
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input")
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> LookAction;
-	
-	UPROPERTY(EditAnywhere, Category = "Input")
-	TObjectPtr<UInputAction> JumpAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input")
-	TObjectPtr<UInputAction> InteractAction;
-	
-	UPROPERTY(EditAnywhere, Category = "Input")
-	TObjectPtr<UInputAction> UIToggleAction;
-
-	bool bCanLook;
 #pragma endregion
 	
 };

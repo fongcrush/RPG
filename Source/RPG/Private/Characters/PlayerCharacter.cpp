@@ -2,18 +2,19 @@
 
 
 #include "Characters/PlayerCharacter.h"
+#include "Components/InventoryComponent.h"
 #include "UIs/RPGHUD.h"
 
 // UE
-#include "DrawDebugHelpers.h"
+#include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/InventoryComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Components/InteractorComponent.h"
+#include "Components/RPGAbilitySystemComponent.h"
+#include "RPG/RPG.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -54,7 +55,6 @@ APlayerCharacter::APlayerCharacter()
 	InventoryComponent->SetWeightCapacity(200.f);
 
 	InteractorComponent = CreateDefaultSubobject<UInteractorComponent>(TEXT("InteractorComponent"));
-	bCanLook = true;
 }
 
 // Called when the game starts or when spawned
@@ -74,17 +74,27 @@ void APlayerCharacter::BeginPlay()
 	}
 }
 
+void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	if (UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
+	}
+}
+
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void APlayerCharacter::ToggleInventory()
+void APlayerCharacter::Walk(const FInputActionInstance& Instance)
 {
-	HUD->ToggleInventory();
+	const FVector2D Value = Instance.GetValue().Get<FVector2D>();
+	K2_Walk(Value);
 }
 
-void APlayerCharacter::Move(const FVector2D& Value)
+void APlayerCharacter::K2_Walk(const FVector2D& Value)
 {
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -96,8 +106,9 @@ void APlayerCharacter::Move(const FVector2D& Value)
 	AddMovementInput(RightDirection, Value.X);
 }
 
-void APlayerCharacter::Look(const FVector2D& Value)
+void APlayerCharacter::Look(const FInputActionInstance& Instance)
 {
+	const FVector2D Value = Instance.GetValue().Get<FVector2D>();
 	AddControllerYawInput(Value.X);
 	AddControllerPitchInput(Value.Y);
 }

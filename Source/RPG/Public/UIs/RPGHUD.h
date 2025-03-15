@@ -20,30 +20,14 @@ class RPG_API ARPGHUD : public AHUD
 
 public:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	//	VARIABLES & PROPERTIES
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	UPROPERTY(EditDefaultsOnly, Category = "Widget")
-	TSubclassOf<UInventoryMenu> InventoryMenuClass;
-	
-	UPROPERTY()
-	TObjectPtr<UInventoryMenu> InventoryMenu;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Widget")
-	TSubclassOf<UInteractionWidget> InteractionWidgetClass;
-	
-	UPROPERTY()
-	TObjectPtr<UInteractionWidget> InteractionWidget;
-
-	bool bIsMenuVisible;
-
-	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	void UpdateInteractionWidget(const FInteractableData& InteractableData) const;
 	void ShowInteractionWidget() const;
 	void HideInteractionWidget() const;
 	
-	void ToggleInventory();	
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void ToggleInventory();
 
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -51,6 +35,23 @@ protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	virtual void BeginPlay() override;
 	
-	void DisplayMenu();
-	void HideMenu();
+	void ShowInventory();
+	void HideInventory();
+
+public:	
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	VARIABLES & PROPERTIES
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+	TSubclassOf<UInventoryMenu> InventoryMenuClass;
+	UPROPERTY()
+	TObjectPtr<UInventoryMenu> InventoryMenu;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+	TSubclassOf<UInteractionWidget> InteractionWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UInteractionWidget> InteractionWidget;
+
+	bool bIsMenuVisible;
+
 };

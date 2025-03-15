@@ -7,10 +7,11 @@
 #include "GameFramework/Character.h"
 #include "RPGCharacterBase.generated.h"
 
-class URPGAttributeSet;
-class UGameplayEffect;
+struct FGameplayAbilitySpec;
 class URPGAbilitySystemComponent;
+class URPGAttributeSet;
 class UGameplayAbility;
+class UGameplayEffect;
 
 UCLASS()
 class RPG_API ARPGCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -21,17 +22,18 @@ public:
 	ARPGCharacterBase();
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	virtual URPGAttributeSet* GetAttributeSet() const { return AttributeSet; };
+	virtual const URPGAttributeSet* GetAttributeSet() const { return AttributeSet; };
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
 	TObjectPtr<URPGAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY()
-	TObjectPtr<URPGAttributeSet> AttributeSet;
+	const URPGAttributeSet* AttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
