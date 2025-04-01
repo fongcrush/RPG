@@ -3,12 +3,13 @@
 
 #include "UIs/Inventory/InventoryTooltip.h"
 
+// User Defined
+#include "Objects/Items/ItemBase.h"
+#include "UIs/Inventory/ItemSlotWidget.h"
+
 // UE
 #include "Components/TextBlock.h"
 
-// User Defined
-#include "Items/ItemBase.h"
-#include "UIs/Inventory/ItemSlotWidget.h"
 
 void UInventoryTooltip::NativeConstruct()
 {

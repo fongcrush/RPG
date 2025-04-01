@@ -1,17 +1,16 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "Items/Inventory.h"
+// User Defined
+#include "Objects/Items/Inventory.h"
+#include "RPG/RPG.h"
+#include "Frameworks/RPGHUD.h"
+#include "UIs/Inventory/InventoryMenu.h"
+#include "UIs/Inventory/InventoryWidget.h"
 
 // UE
 #include "Blueprint/UserWidget.h"
-
-// User Defined
 #include "Components/ScrollBox.h"
-#include "RPG/RPG.h"
-#include "UIs/InventoryMenu.h"
-#include "UIs/RPGHUD.h"
-#include "UIs/Inventory/InventoryWidget.h"
+
 
 
 UInventory::UInventory()
@@ -62,7 +61,7 @@ bool UInventory::InitializeWidget()
 	}
 	// 위젯 생성, 인벤토리 메뉴에 등록
 	const APlayerController* const& PlayerController = GetWorld()->GetFirstPlayerController<APlayerController>();
-	InventoryMenu = Cast<ARPGHUD>(PlayerController->GetHUD())->InventoryMenu;
+	InventoryMenu = Cast<ARPGHUD>(PlayerController->GetHUD())->GetInventoryMenu();
 	InventoryWidget = CreateWidget<UInventoryWidget>(GetWorld(), InventoryStaticData->InventoryWidgetClass);
 	if (InventoryWidget)
 	{

@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Items/ItemBase.h"
-#include "World/ItemActor.h"
+#include "Objects/Items/ItemBase.h"
+#include "Actors/Interactions/ItemActor.h"
 
 void UItemBase::PostDuplicate(EDuplicateMode::Type DuplicateMode)
 {

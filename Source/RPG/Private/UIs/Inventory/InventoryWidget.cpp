@@ -2,14 +2,15 @@
 
 #include "UIs/Inventory/InventoryWidget.h"
 
-// UE
-#include "Components/UniformGridPanel.h"
-
 // User Defined
 #include "RPG/RPG.h"
 #include "Interfaces/DynamicItem.h"
-#include "Items/ItemBase.h"
+#include "Objects/Items/ItemBase.h"
 #include "UIs/Inventory/ItemSlotWidget.h"
+
+// UE
+#include "Components/UniformGridPanel.h"
+
 
 
 void UInventoryWidget::SynchronizeProperties()

@@ -4,8 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "InputAction.h"
-#include "InputActionValue.h"
-#include "Framework/RPGCharacterBase.h"
+#include "Characters/RPGCharacterBase.h"
 #include "PlayerCharacter.generated.h"
 
 class UInteractorComponent;
@@ -40,6 +39,9 @@ public:
 	
 	UFUNCTION()
 	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintPure, Category = "InputAction")
+	FVector2D GetIAMoveValue();
 	
 protected:
 #pragma endregion

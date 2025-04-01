@@ -3,16 +3,16 @@
 
 #include "UIs/Inventory/ItemSlotWidget.h"
 
+// User Defined
+#include "Objects/Items/ItemBase.h"
+#include "UIs/Inventory/DragItemVisual.h"
+#include "UIs/Inventory/InventoryTooltip.h"
+#include "UIs/Inventory/ItemDragDropOperation.h"
+
 // UE
 #include "Components/Border.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
-
-// User Defined
-#include "Items/ItemBase.h"
-#include "UIs/Inventory/DragItemVisual.h"
-#include "UIs/Inventory/InventoryTooltip.h"
-#include "UIs/Inventory/ItemDragDropOperation.h"
 
 
 void UItemSlotWidget::NativeOnInitialized()
@@ -32,9 +32,10 @@ void UItemSlotWidget::NativeOnInitialized()
 
 void UItemSlotWidget::Drop(const int32& QuantityDropped)
 {
-	if (Item)
+	if (!Item)
 	{
 		LOG_CALLINFO("슬롯에 아이템이 없습니다.")
+		return;
 	}
 	AActor* Owner = GetWorld()->GetFirstPlayerController()->GetPawn();
 	UItemBase::GetValidItem(Item)->Drop(Owner, Quantity);
@@ -85,7 +86,7 @@ void UItemSlotWidget::Refresh()
 	}
 	if (UTexture2D* Icon = Item->GetStaticData()->AssetData.Icon)
 	{
-		ItemIcon->SetBrushFromTexture(Icon);
+		ItemIcon->SetBrushFromTexture(Icon); 
 		ItemIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
 	}
 	if (Item->IsStackable())
@@ -165,7 +166,7 @@ bool UItemSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropE
 			Quantity = SourceQuantity;
 			
 			Refresh();
-			SourceSlot->Refresh();
+			SourceSlot->Reset();
 			return true;
 		}
 		// 아이템이 다르면 서로 바꿈

@@ -30,7 +30,8 @@ public class RPG : ModuleRules
 		// Uncomment if you are using Slate UI
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"EnhancedInput"
+			"EnhancedInput",
+			"Niagara",
 		});
 		
 		if (Target.bBuildEditor)

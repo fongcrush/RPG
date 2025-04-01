@@ -2,19 +2,19 @@
 
 
 #include "Characters/PlayerCharacter.h"
-#include "Components/InventoryComponent.h"
-#include "UIs/RPGHUD.h"
 
-// UE
+//User Defined
+#include "Components/Others/InventoryComponent.h"
+#include "Components/Others/InteractorComponent.h"
+#include "Frameworks/RPGHUD.h"
+
+//UE
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Components/InteractorComponent.h"
-#include "Components/RPGAbilitySystemComponent.h"
-#include "RPG/RPG.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -48,7 +48,7 @@ APlayerCharacter::APlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
+	GetCapsuleComponent()->InitCapsuleSize(34.f, 88.f);
 	BaseEyeHeight = 74.f;
 
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
@@ -61,13 +61,11 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
 	HUD = Cast<ARPGHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
 
-	if (const APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	if (APlayerController* const&& PlayerController = Cast<APlayerController>(GetController()))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		if (const auto Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}

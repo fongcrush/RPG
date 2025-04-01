@@ -1,13 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "World/ItemActor.h"
-
-#include "Components/InventoryComponent.h"
-#include "Characters/PlayerCharacter.h"
-#include "Items/ItemBase.h"
+// User Defined
+#include "Actors/Interactions/ItemActor.h"
 #include "RPG/RPG.h"
-#include "UIs/RPGHUD.h"
+#include "Objects/Items/ItemBase.h"
+#include "Frameworks/RPGHUD.h"
+#include "Characters/PlayerCharacter.h"
+#include "Components/Others/InventoryComponent.h"
 #include "UIs/Interaction/InteractionWidget.h"
 
 
@@ -30,11 +29,9 @@ void AItemActor::BeginPlay()
 		LOG_WARNING("%s: ItemClass is nullptr", *GetName());
 		return;
 	}
-	HUD = Cast<ARPGHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
-	
 	Item = ItemClass->GetDefaultObject<UItemBase>();
 	PickupMesh->SetStaticMesh(Item->GetStaticData()->AssetData.Mesh);
-	
+
 	LoadInteractableData();
 }
 
@@ -45,12 +42,11 @@ void AItemActor::InitializeDrop(const TObjectPtr<UItemBase>& ItemDropped, int32 
 		LOG_ERROR("%s: DropItem is nullptr", *GetName());
 		return;
 	}
-	HUD = Cast<ARPGHUD>(GetWorld()->GetFirstPlayerController()->GetHUD());
-	
+
 	Item = ItemDropped;
 	Quantity = InQuantity;
 	PickupMesh->SetStaticMesh(ItemDropped->GetStaticData()->AssetData.Mesh);
-	
+
 	LoadInteractableData();
 }
 
@@ -110,19 +106,20 @@ void AItemActor::TakeItem(APlayerCharacter* const& Taker)
 		LOG_CALLINFO("플레이어 인벤토리가 유효하지 않습니다.");
 		return;
 	}
-	
+
 	// 인벤토리에 아이템 추가 및 조정
 	const FItemAddResult AddResult = Taker->GetInventoryComponent()->HandleAddItem(Item, Quantity);
 	LOG_CALLINFO("%s", *AddResult.ResultMessage.ToString());
-	switch (AddResult.OperationResult) {
-	case EItemAddResult::None:
+	switch (AddResult.OperationResult)
+	{
+	case EItemAddResult::None: break;
+	case EItemAddResult::Partial: InteractableData.Quantity = AddResult.LeftQuantity;
+		if (const ARPGHUD* HUD = Cast<ARPGHUD>(GetWorld()->GetFirstPlayerController()->GetHUD()))
+		{
+			HUD->GetInteractionWidget()->UpdateWidget(InteractableData);
+		}
 		break;
-	case EItemAddResult::Partial:
-		InteractableData.Quantity = AddResult.LeftQuantity;
-		HUD->InteractionWidget->UpdateWidget(InteractableData);
-		break;
-	case EItemAddResult::All:
-		Destroy();		
+	case EItemAddResult::All: Destroy();
 		break;
 	}
 }
