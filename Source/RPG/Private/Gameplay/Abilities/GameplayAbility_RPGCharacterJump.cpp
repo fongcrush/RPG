@@ -7,7 +7,7 @@
 UGameplayAbility_RPGCharacterJump::UGameplayAbility_RPGCharacterJump()
 {	
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::NonInstanced;
+	// InstancingPolicy = EGameplayAbilityInstancingPolicy::NonInstanced;
 }
 
 void UGameplayAbility_RPGCharacterJump::ActivateAbility(

@@ -9,8 +9,8 @@
 /**
  * 
  */
-UCLASS(editinlinenew, Blueprintable, Const, hidecategories = Object, collapsecategories, MinimalAPI, meta = (ShowWorldContextPin, DisplayName = "Activate Collider"))
-class UAnimNotifyState_ActivateCollider : public UAnimNotifyState
+UCLASS(editinlinenew, Blueprintable, Const, hidecategories = Object, collapsecategories, meta = (ShowWorldContextPin, DisplayName = "Activate Collider"))
+class RPG_API UAnimNotifyState_ActivateCollider : public UAnimNotifyState
 {
 	GENERATED_BODY()
 

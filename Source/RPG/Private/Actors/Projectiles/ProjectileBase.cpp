@@ -32,11 +32,14 @@ EDataValidationResult AProjectileBase::IsDataValid(FDataValidationContext& Conte
 void AProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
+	Reset();
 }
 
 void AProjectileBase::Reset()
 {
 	Super::Reset();
+
+	bShoot = false;
 }
 
 // Called every frame

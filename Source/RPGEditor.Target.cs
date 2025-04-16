@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 using UnrealBuildTool;
-using System.Collections.Generic;
 
 public class RPGEditorTarget : TargetRules
 {
@@ -10,6 +9,10 @@ public class RPGEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 
-		ExtraModuleNames.AddRange( new string[] { "RPG" } );
+		ExtraModuleNames.AddRange( new string[]
+		{
+			"RPG",
+			"FongcrushTestEditor",
+		});
 	}
 }

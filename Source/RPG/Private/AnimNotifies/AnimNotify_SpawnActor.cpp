@@ -15,6 +15,7 @@ UAnimNotify_SpawnActor::UAnimNotify_SpawnActor()
 }
 
 #if WITH_EDITOR
+
 TArray<FName> UAnimNotify_SpawnActor::GetSocketNames() const
 {
 	TArray<FName> SocketNames;
@@ -57,12 +58,36 @@ void UAnimNotify_SpawnActor::ValidateAssociatedAssets()
 	}
 }
 
+void UAnimNotify_SpawnActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	
+	if (!SpawnedEditorOnly.IsValid() || PropertyChangedEvent.Property == nullptr) return;
+
+	const FName PropertyName = PropertyChangedEvent.Property->GetFName();
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UAnimNotify_SpawnActor, SocketName))
+	{
+		if (bAttached)
+		{
+			USkeletalMeshComponent* MeshComp = SpawnedEditorOnly->GetOwner()->GetComponentByClass<USkeletalMeshComponent>();
+			SpawnedEditorOnly->AttachToComponent(MeshComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale, SocketName);
+			SpawnedEditorOnly->SetActorRelativeLocation(Location);
+		}
+		else
+		{
+			SpawnedEditorOnly->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepRelative, false));
+			SpawnedEditorOnly->SetActorLocation(Location);
+			SpawnedEditorOnly->SetActorRotation(FRotator::ZeroRotator);			
+		}
+	}
+}
+
 void UAnimNotify_SpawnActor::DrawInEditor(
 	FPrimitiveDrawInterface* PDI,
 	USkeletalMeshComponent* MeshComp,
 	const UAnimSequenceBase* Animation,
 	const FAnimNotifyEvent& NotifyEvent) const
-{
+{	
 	// 엑터 제거 예약. Notify가 시퀸서에서 지워지면 생성한 엑터를 제거
 	MeshComp->GetWorld()->GetTimerManager().ClearTimer(RemoveCheckHandle);
 	RemoveCheckHandle = MeshComp->GetWorld()->GetTimerManager().SetTimerForNextTick([this, MeshComp]()
@@ -77,7 +102,7 @@ void UAnimNotify_SpawnActor::DrawInEditor(
 	});
 
 	// 엑터 생성 위치 시각화
-	const FVector DebugPos = bAttached ? MeshComp->GetSocketLocation(SocketName) + Location : Location;
+	const FVector DebugPos = bAttached ? MeshComp->GetSocketTransform(SocketName).TransformPosition(Location) : Location;
 	DrawDebugSphere(MeshComp->GetWorld(), DebugPos, 7.f, 12, NotifyColor, false, 0.05f);
 
 	// ActorClass 가 변경되면 기존 엑터 제거
@@ -114,6 +139,10 @@ void UAnimNotify_SpawnActor::DrawInEditor(
 		if (!SpawnedEditorOnly.IsValid())
 		{
 			SpawnedEditorOnly = MeshComp->GetWorld()->SpawnActor<AActor>(ActorClass);
+			if (SpawnedEditorOnly.IsValid())
+			{
+				SpawnedEditorOnly->SetOwner(MeshComp->GetOwner());
+			}
 		}
 		if (SpawnedEditorOnly.IsValid() && bAttached)
 		{
@@ -130,7 +159,7 @@ void UAnimNotify_SpawnActor::Notify(USkeletalMeshComponent* MeshComp, UAnimSeque
 	CALLINFO
 
 #if WITH_EDITORONLY_DATA // 노티파이가 트리거된 곳이 PIE/SIE 가 아닌 에디터 프리뷰 씬이고, 이전에 생성한 엑터가 존재하는 경우 패스
-	if (!GEditor->IsPlayingSessionInEditor() && SpawnedEditorOnly.IsValid()) return;
+	if (GEditor && !GEditor->IsPlayingSessionInEditor() && SpawnedEditorOnly.IsValid()) return;
 #endif
 
 	// 엑터 생성 및 부착
@@ -145,7 +174,7 @@ void UAnimNotify_SpawnActor::Notify(USkeletalMeshComponent* MeshComp, UAnimSeque
 			SpawnedCollider->SetActorRelativeLocation(Location);
 		}
 #if WITH_EDITORONLY_DATA // 시퀸서 트랙에서 애니메이션 위치를 임의로 바꾼경우에 대응
-		if (!GEditor->IsPlayingSessionInEditor())
+		if (GEditor && !GEditor->IsPlayingSessionInEditor())
 		{
 			if (SpawnedEditorOnly.IsValid())
 			{

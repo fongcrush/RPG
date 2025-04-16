@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{73A0B191-40E9-7497-1D95-939A27EC08F0}",
+	"EngineAssociation": "Fongcrush-SourceBuild-5.5.4",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -17,8 +17,23 @@
 	],
 	"Plugins": [
 		{
+			"Name": "EditorScriptingUtilities",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
 			"Name": "ModelingToolsEditorMode",
 			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
+			"Name": "FlatNodes",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/b719437f3fb54c259b34227363df8cab",
 			"TargetAllowList": [
 				"Editor"
 			]
@@ -28,23 +43,23 @@
 			"Enabled": true
 		},
 		{
+			"Name": "FongcrushEditors",
+			"Enabled": true
+		},
+		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
 		},
 		{
-			"Name": "EditorScriptingUtilities",
-			"Enabled": true,
-			"TargetAllowList": [
-				"Editor"
-			]
+			"Name": "ConsoleVariables",
+			"Enabled": true
 		},
 		{
-			"Name": "FlatNodes",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/b719437f3fb54c259b34227363df8cab"
+			"Name": "GameplayBehaviors",
+			"Enabled": true
 		},
 		{
-			"Name": "FMODStudio",
+			"Name": "FongcrushGame",
 			"Enabled": true
 		}
 	]

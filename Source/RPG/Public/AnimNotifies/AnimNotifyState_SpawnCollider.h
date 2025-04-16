@@ -48,6 +48,8 @@ protected:
 	TArray<FName> GetSocketNames() const;
 	/** 에셋 검사. ActorClass가 None일 경우 경고 메시지. */
 	virtual void ValidateAssociatedAssets() override;
+	// bAttached 값이 변경되면 프리뷰 엑터 초기화
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	/** 애니메이션 시퀸스 에디터의 Notify 시각화에 사용. */
 	virtual void DrawInEditor(FPrimitiveDrawInterface* PDI, USkeletalMeshComponent* MeshComp, const UAnimSequenceBase* Animation, const FAnimNotifyEvent& NotifyEvent) const override;
 #endif
@@ -68,13 +70,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AnimNotify")
 	TSubclassOf<AActor> ActorClass;
 	
-	UPROPERTY(EditAnywhere, Category = "AnimNotify")
+	UPROPERTY(EditAnywhere, Category = "AnimNotify", meta = (InlineEditConditionToggle))
 	bool bAttached;
 	
-	UPROPERTY(EditAnywhere, Category = "AnimNotify", meta = (EditCondition = "bAttached", EditConditionHides, GetOptions = "GetSocketNames"))
+	UPROPERTY(EditAnywhere, Category = "AnimNotify", meta = (EditCondition = "bAttached", GetOptions = "GetSocketNames"))
 	FName SocketName;
 	
-	UPROPERTY(EditAnywhere, Category = "AnimNotify")
+	UPROPERTY(EditAnywhere, Category = "AnimNotify", meta = (MakeEditWidget = true))
 	FVector Location;
 
 #if WITH_EDITORONLY_DATA

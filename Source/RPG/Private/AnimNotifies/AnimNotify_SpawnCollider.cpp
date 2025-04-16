@@ -7,6 +7,7 @@
 
 
 #if WITH_EDITOR
+
 void UAnimNotify_SpawnCollider::DrawInEditor(
 	FPrimitiveDrawInterface* PDI,
 	USkeletalMeshComponent* MeshComp,
@@ -27,7 +28,7 @@ void UAnimNotify_SpawnCollider::DrawInEditor(
 	});
 	
 	// 엑터 생성 위치 시각화
-	const FVector DebugPos = bAttached ? MeshComp->GetSocketLocation(SocketName) + Location : Location;
+	const FVector DebugPos = bAttached ? MeshComp->GetSocketTransform(SocketName).TransformPosition(Location) : Location;
 	DrawDebugSphere(MeshComp->GetWorld(), DebugPos, 7.f, 12, NotifyColor, false, 0.05f);
 	
 	// ActorClass가 변경되면 기존 엑터 제거
@@ -42,6 +43,10 @@ void UAnimNotify_SpawnCollider::DrawInEditor(
 	if (!SpawnedEditorOnly.IsValid())
 	{
 		SpawnedEditorOnly = MeshComp->GetWorld()->SpawnActor<AActor>(ActorClass);
+		if (SpawnedEditorOnly.IsValid())
+		{
+			SpawnedEditorOnly->SetOwner(MeshComp->GetOwner());
+		}
 	}
 	if (SpawnedEditorOnly.IsValid() && bAttached)
 	{
@@ -59,7 +64,7 @@ void UAnimNotify_SpawnCollider::Notify(
 	if (!ActorClass || MeshComp->GetNetMode() == NM_Client) return;
 
 #if WITH_EDITORONLY_DATA // 노티파이가 트리거된 곳이 PIE/SIE 가 아닌 에디터 프리뷰 씬이고, 이전에 생성한 엑터가 존재하는 경우 패스
-	if (!GEditor->IsPlayingSessionInEditor() && SpawnedEditorOnly.IsValid()) return;
+	if (GEditor && !GEditor->IsPlayingSessionInEditor() && SpawnedEditorOnly.IsValid()) return;
 #endif
 	
 	// 콜라이더 생성 및 부착
@@ -82,7 +87,7 @@ void UAnimNotify_SpawnCollider::Notify(
 			}
 		});
 #if WITH_EDITORONLY_DATA // 시퀸서 트랙에서 애니메이션 위치를 임의로 바꾼경우에 대응
-		if (!GEditor->IsPlayingSessionInEditor())
+		if (GEditor && !GEditor->IsPlayingSessionInEditor())
 		{
 			if (SpawnedEditorOnly.IsValid())
 			{
