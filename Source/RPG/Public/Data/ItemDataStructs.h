@@ -38,6 +38,8 @@ struct FItemAssetData
 
 	UPROPERTY(EditAnywhere)
 	UStaticMesh* Mesh;
+
+	FItemAssetData(): Icon(nullptr), Mesh(nullptr) {}
 };
 
 #if WITH_EDITOR
@@ -85,8 +87,17 @@ struct FItemStaticBase : public FTableRowBase
 	UPROPERTY(EditDefaultsOnly, meta = (DisplayPriority = 20, ShowOnlyInnerProperties))
 	FItemAssetData AssetData;
 
-
 	FOnRowNameChanged OnRowNameChanged;
+
+	FItemStaticBase():
+		Type(EItemType::Mundane),
+		Quality(EItemQuality::Normal),
+		Weight(0),
+		bIsStackable(false),
+		MaxStackSize(0),
+		SellValue(0)
+	{
+	}
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	FUNCTIONS

@@ -26,16 +26,16 @@ struct FItemAddResult
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadOnly, Category = "Item Add Result")
-	int32 ActualAmountAdded;
+	int32 ActualAmountAdded = 0;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Item Add Result")
-	EItemAddResult OperationResult;
+	EItemAddResult OperationResult = EItemAddResult::None;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Item Add Result")
 	FText ResultMessage;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Item Add Result")
-	int32 LeftQuantity;
+	int32 LeftQuantity = 0;
 	
 	static FItemAddResult AddedNone(const FText& ErrorText)
 	{

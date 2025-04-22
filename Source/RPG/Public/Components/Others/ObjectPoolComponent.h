@@ -12,10 +12,7 @@ struct FPool
 {
 	GENERATED_BODY()
 
-	FPool()
-	{
-	}
-
+	FPool()	{}
 	FPool(const FPool& Other)
 	{
 		if (this != &Other)
