@@ -58,10 +58,10 @@ void FFCExampleEdMode::AddPoint()
 {
 	if (AFCExampleTargetPoint* SelectedPointActor = GetSelectedTargetPointActor())
 	{
-		// 트랜젝션에 현재 상태 저장 
-		SelectedPointActor->Modify();
 		// 트랜잭션(do / undo) 객체
 		const FScopedTransaction Transaction(FText::FromString("Add Point"));
+		// 트랜젝션에 현재 상태 저장 
+		SelectedPointActor->Modify();
 
 		// 현재 뷰포트의 카메라 위치를 기준으로 새 점 위치 설정. 
 		const FEditorViewportClient* EditorViewportClient = StaticCast<FEditorViewportClient*>(GEditor->GetActiveViewport()->GetClient());

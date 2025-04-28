@@ -143,7 +143,7 @@ void FFCExampleMenuListener::MenuCommand01()
 
 FString FFCExampleMenuListener::GetSelectedActorNames()
 {
-	const FScopedTransaction Transection(FText::FromString("Get Actor Name"));
+	const FScopedTransaction Transaction(FText::FromString("Get Actor Name"));
 
 	TArray<AActor*> SelectedActors;
 	GEditor->GetSelectedActors()->GetSelectedObjects(SelectedActors);

@@ -1,4 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
+#if WITH_EDITOR
 
 #pragma once
 
@@ -6,33 +7,64 @@
 #include "UObject/Object.h"
 #include "SpawnerSubSystem.generated.h"
 
-class ASpawnerPreviewActor;
 class USpawnerComponent;
+
+
+/**
+ * Transaction용 UObject
+ * Subsystem 자체는 Transaction을 지원하지 않는다.
+ */
+UCLASS()
+class FCSPAWNER_API USpawnerData : public UObject
+{
+	GENERATED_BODY()
+
+#if WITH_EDITORONLY_DATA
+public:
+	UPROPERTY()
+	TSet<TWeakObjectPtr<USpawnerComponent>> SpawnerComps;
+
+	UPROPERTY()
+	TMap<UPrimitiveComponent*, TWeakObjectPtr<USpawnerComponent>> PreviewCompMap;
+#endif
+};
 
 /**
  * 
  */
 UCLASS()
-class FCSPAWNER_API USpawnerSubSystem : public UWorldSubsystem
+class FCSPAWNER_API UEditorWorldSpawnerSubSystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
 	friend class USpawnerComponent;
-	friend class ASpawnerPreviewActor;
 
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	FUNCTIONS
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	
-	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override { return WorldType == EWorldType::Editor; }	
+	UEditorWorldSpawnerSubSystem();
 
-	FORCEINLINE TSet<USpawnerComponent*>& GetSpawnerComps() { return SpawnerComps; }
-	FORCEINLINE TSet<ASpawnerPreviewActor*>& GetPreviewActors() { return PreviewActors; }
+private:
+	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override
+	{
+		return WorldType == EWorldType::Editor || WorldType == EWorldType::EditorPreview;
+	}
 	
+public:
+	int32 GetSelectedSpawners(TArray<UObject*>& OutSelected) const;
+	
+#if WITH_EDITORONLY_DATA
 
-private:	
-	UPROPERTY()
-	TSet<USpawnerComponent*> SpawnerComps;
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	//	VARIABLES & PROPERTIES
+	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	TSet<TWeakObjectPtr<USpawnerComponent>> Spawners;
+
+	TMap<UPrimitiveComponent*, TWeakObjectPtr<USpawnerComponent>> PreviewMap;
+#endif
 	
-	UPROPERTY()
-	TSet<ASpawnerPreviewActor*> PreviewActors;
 };
+
+
+#endif

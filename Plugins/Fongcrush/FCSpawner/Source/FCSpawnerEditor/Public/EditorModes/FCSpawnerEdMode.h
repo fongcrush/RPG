@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "EdMode.h"
+#include "SubSystems/SpawnerSubSystem.h"
 
+class UEditorWorldSpawnerSubSystem;
 /**
  * 
  */
@@ -20,10 +22,11 @@ private:
 	virtual void Initialize() override;
 	virtual void Enter() override;
 	virtual void Exit() override;
-	
-	virtual void RegisterSelectionEvent();
-	virtual void UnRegisterBindSelectionEvents();
-	virtual void OnSelected(UObject* Object);
+
+	// USelection Event용 함수들
+	virtual void RegisterSelectedEvent();
+	virtual void UnRegisterSelectedEvent();
+	virtual void OnSelectedEvent(UObject* Object);
 	
 	virtual void Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI) override;
 	virtual void DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
@@ -31,30 +34,28 @@ private:
 	
 	TSharedPtr<SWidget> GenerateContextMenu() const;
 
-	void SelectSpawner(const TWeakObjectPtr<UObject>& Spawner, bool bIsSelected = true) const;
-	void ResetSelection();
-	
-	/** 유효하지 않은 SelectedSpawners 요소 제거 */
-	void RemoveInvalidSelectedRefs() const;
+public:
+	/** 선택 여부 변경 및 윤곽선 처리 */
+	void SelectSpawner(const TWeakObjectPtr<UObject>& InSpawner, bool bIsSelected = true) const;
+	/** 모든 Spawner 선택 해제 */
+	void DeSelectAll() const;
+private:	
 	
 	virtual bool UsesToolkits() const override { return true; }
 	virtual bool IsCompatibleWith(FEditorModeID OtherModeID) const override { return true; }
-
-public:
-	FORCEINLINE TSet<TWeakObjectPtr<UObject>> GetSelectedSpawners() const { return SelectedSpawners; }
 
 private:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	TObjectPtr<UMaterial> ValidMaterial;
-	TObjectPtr<UMaterial> ValidMaterial2;
-	TObjectPtr<UMaterial> InvalidMaterial;
-	TObjectPtr<UMaterial> InvalidMaterial2;
-	TObjectPtr<UMaterial> SelectedMaterial;
-	TObjectPtr<UMaterial> SelectedMaterial2;
+	TObjectPtr<UMaterialInterface> ValidMaterial;
+	TObjectPtr<UMaterialInterface> ValidMaterial2;
+	TObjectPtr<UMaterialInterface> InvalidMaterial;
+	TObjectPtr<UMaterialInterface> InvalidMaterial2;
+	TObjectPtr<UMaterialInterface> SelectedMaterial;
+	TObjectPtr<UMaterialInterface> SelectedMaterial2;
 
-	mutable TSet<TWeakObjectPtr<UObject>> SelectedSpawners;
+	TObjectPtr<UEditorWorldSpawnerSubSystem> SpawnerSubSystem;
 
 	FDelegateHandle OnSelectedHandle;
 };

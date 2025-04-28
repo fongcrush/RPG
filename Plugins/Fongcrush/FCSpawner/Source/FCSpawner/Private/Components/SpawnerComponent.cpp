@@ -2,11 +2,11 @@
 
 
 #include "Components/SpawnerComponent.h"
+#include "Components/BillboardComponent.h"
 
 #include "FCSpawner.h"
 
 #if WITH_EDITOR
-#include "Actors/SpawnerPreviewActor.h"
 #include "SubSystems/SpawnerSubSystem.h"
 #endif
 
@@ -24,13 +24,13 @@ void USpawnerComponent::PostEditChangeProperty(struct FPropertyChangedEvent& Pro
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
 	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
-	
+
 	UWorld* World = GetWorld();
-	if (World && World->WorldType == EWorldType::Editor)
+	if (World && (World->WorldType == EWorldType::Editor || World->WorldType == EWorldType::EditorPreview))
 	{
 		if (PropertyName == GET_MEMBER_NAME_CHECKED(USpawnerComponent, ActorClass))
 		{
-			InitPreview();
+			NewPreview();
 		}
 	}
 }
@@ -40,106 +40,129 @@ void USpawnerComponent::OnRegister()
 	Super::OnRegister();
 
 	UWorld* World = GetWorld();
-	if (World && World->WorldType == EWorldType::Editor)
+	if (World && (World->WorldType == EWorldType::Editor || World->WorldType == EWorldType::EditorPreview))
 	{
-		if (USpawnerSubSystem* SubSystem = World->GetSubsystem<USpawnerSubSystem>())
+		if (UEditorWorldSpawnerSubSystem* SpawnerSubSystem = World->GetSubsystem<UEditorWorldSpawnerSubSystem>())
 		{
-			SubSystem->SpawnerComps.Emplace(this);
+			// SpawnerSubSystem 에 참조 등록
+			SpawnerSubSystem->Spawners.Emplace(this);
 		}
 
-		InitPreview();
+		NewPreview();
 	}
 }
 
 void USpawnerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
-	UE_LOG(FCSpawner, Display, TEXT("%s OnComponentDestroyed"), *GetName());
 
 	UWorld* World = GetWorld();
-	if (World && World->WorldType == EWorldType::Editor)
+	if (World && (World->WorldType == EWorldType::Editor || World->WorldType == EWorldType::EditorPreview))
 	{
-		if (USpawnerSubSystem* SubSystem = World->GetSubsystem<USpawnerSubSystem>())
-		{
-			World->GetSubsystem<USpawnerSubSystem>()->SpawnerComps.Remove(this);
-		}
+		World->GetSubsystem<UEditorWorldSpawnerSubSystem>()->Spawners.Remove(this);
 	}
-
-	if (PreviewActor.IsValid())
-	{
-		PreviewActor->Destroy();
-	}
+	DestroyPreview();
 }
 
-void USpawnerComponent::InitPreview()
+void USpawnerComponent::NewPreview()
 {
-	// 기존 미리보기 엑터가 있다면 제거
-	if (PreviewActor.IsValid())
-	{
-		PreviewActor->Destroy();
-		PreviewActor.Reset();
-	}
-
+	DestroyPreview();
+	
 	AActor* Owner = GetOwner();
 	UWorld* World = GetWorld();
 
-	if (!Owner || !World)
+	if (!ActorClass || !Owner || !World || !(World->WorldType == EWorldType::Editor || World->WorldType == EWorldType::EditorPreview))
 	{
 		return;
 	}
-	UE_LOG(FCSpawner, Display, TEXT("%s InitPreview PASS 1"), *GetName());
+	
+	USceneComponent* OwnerRoot = Owner->GetRootComponent();
 
-	// 무한 루프 / 중복 생성 방지
-	if (!ActorClass || ActorClass == Owner->GetClass())
+	// 엑터 편집기가 열릴 때, "SpawnActor failed because we are running a ConstructionScript" 가 발생하여 TempActor 생성 불가
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.bAllowDuringConstructionScript = true;
+
+	// ActorClass CDO엑터의 컴포넌트 복제용 임시 엑터 생성
+	// 에디터 시점에서 CDO엑터의 컴포넌트는 아직 등록되지 않아서 가져올 수 없으므로 임시 엑터를 생성하고 RegisterAllComponent를 호출해 가져온다.
+	AActor* TempActor = World->SpawnActor<AActor>(ActorClass, SpawnParameters);
+	if (TempActor == nullptr) return;
+	TempActor->RegisterAllComponents();
+
+	// PrimitiveComponent 기반 컴포넌트 목록 가져오기
+	TArray<UPrimitiveComponent*> PrimitiveComps;
+	TempActor->GetComponents(PrimitiveComps, true);
+
+	// PrimitiveComps를 복제하여 미리보기 생성
+	for (UPrimitiveComponent* const& PrimitiveComp : PrimitiveComps)
 	{
-		return;
-	}
-	UE_LOG(FCSpawner, Display, TEXT("%s InitPreview PASS 2"), *GetName());
+		if (PrimitiveComp->IsA<UBillboardComponent>()) continue;
+		
+		UPrimitiveComponent* NewComp = DuplicateObject<UPrimitiveComponent>(PrimitiveComp, Owner, NAME_None);
+		NewComp->SetExternalPackage(GetTransientPackage());
+		NewComp->SetFlags(RF_Transient | RF_TextExportTransient);
+		NewComp->SetIsVisualizationComponent(true); // 시각화 전용 컴포넌트. 월드 아웃아리너와 디테일 패널 목록에 표시되지 않음. 편집기 전용으로 설정 됨.
+		NewComp->CreationMethod = EComponentCreationMethod::Instance;
+		NewComp->Mobility = EComponentMobility::Movable;
+		// NewComp->bSelectable = false;
 
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	Params.NameMode = FActorSpawnParameters::ESpawnActorNameMode::Requested;
-	Params.Name = FName(*FString::Printf(TEXT("%s_%s"), *GetName(), *ActorClass->GetName()));
-	Params.ObjectFlags |= RF_Transient | RF_TextExportTransient;
-	Params.bHideFromSceneOutliner = true;
-
-	if (ASpawnerPreviewActor* NewActor = World->SpawnActor<ASpawnerPreviewActor>())
-	{
-		UE_LOG(FCSpawner, Display, TEXT("%s InitPreview PASS 3"), *GetName());
-
-		USceneComponent* PreviewRoot = NewActor->GetRootComponent();
-		// 루트 컴포넌트 등록. 에디터 시간에 SpawnActor로 생성된 엑터의 컴포넌트는 아직 등록되지 않은 상태다.
-		PreviewRoot->RegisterComponent();
-
-		NewActor->AttachToComponent(this, FAttachmentTransformRules::SnapToTargetIncludingScale);
-		NewActor->OwnerSpawner = this;
-
-		// ActorClass CDO 엑터의 컴포넌트 복제용 임시 엑터 생성
-		// 에디터 시점에서 CDO 엑터의 Component는 등록되지 않은 상태기 때문에, 컴포넌트를 가져오려면 임시 엑터 생성 후  RegisterAllComponents()를 호출해줘야 한다.
-		AActor* TempActor = World->SpawnActor<AActor>(ActorClass);
-		TempActor->RegisterAllComponents();
-
-		// PrimitiveComponent 기반 컴포넌트들의 참조 저장
-		TArray<UPrimitiveComponent*> PrimitiveComps;
-		TempActor->GetComponents(UPrimitiveComponent::StaticClass(), PrimitiveComps);
-
-		// PrimitiveComps를 복제하여 미리보기 엑터에 추가
-		for (UPrimitiveComponent* const& PrimitiveComp : PrimitiveComps)
+		// EditorPreview 에서 오작동이 있으므로 Editor 분기로 제한
+		if (World->WorldType == EWorldType::Editor)
 		{
-			UPrimitiveComponent* NewComp = DuplicateObject<UPrimitiveComponent>(PrimitiveComp, NewActor);
-			NewComp->Mobility = EComponentMobility::Movable;
-			NewActor->AddInstanceComponent(NewComp);
-			NewActor->AddOwnedComponent(NewComp);
-			NewComp->RegisterComponent();
-
-			NewComp->AttachToComponent(PreviewRoot, FAttachmentTransformRules::KeepRelativeTransform);
+			// Owner->AddInstanceComponent(NewComp);
+			Owner->AddOwnedComponent(NewComp);
 		}
 
-		// 임시 엑터 제거
-		TempActor->Destroy();
+		NewComp->RegisterComponent();
+		NewComp->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
 
-		PreviewActor = NewActor;
+		PreviewComponents.Emplace(NewComp);
+
+		if (UEditorWorldSpawnerSubSystem* SpawnerSubSystem = World->GetSubsystem<UEditorWorldSpawnerSubSystem>())
+		{
+			// 클릭 판별용 맵에 미리보기 컴포넌트 등록
+			SpawnerSubSystem->PreviewMap.Emplace(NewComp, this);
+		}
 	}
+	
+	// 임시 엑터 제거
+	TempActor->Destroy();
+}
+
+void USpawnerComponent::Reset()
+{
+	DestroyPreview();
+	SpawnTime = 0.0f;
+	CurrentTime = 0.0f;
+	CountPolicy = ESpawnCountPolicy::Once;
+	SpawnCount = 0;
+	bAttached = false;
+	ActorClass = nullptr;
+}
+
+void USpawnerComponent::DestroyPreview()
+{
+	UEditorWorldSpawnerSubSystem* SpawnerSubSystem = nullptr;
+	if (UWorld* World = GetWorld())
+	{
+		SpawnerSubSystem = World->GetSubsystem<UEditorWorldSpawnerSubSystem>();
+	}
+	
+	for (auto PreviewComp : PreviewComponents)
+	{
+		if (SpawnerSubSystem)
+		{
+			SpawnerSubSystem->PreviewMap.Remove(PreviewComp);
+		}
+		if (IsValid(PreviewComp))
+		{
+			PreviewComp->DestroyComponent();
+			if (AActor* OwnerActor = GetOwner())
+			{
+				OwnerActor->RemoveInstanceComponent(PreviewComp);
+			}
+		}
+	}
+	PreviewComponents.Empty();
 }
 
 #endif
@@ -161,7 +184,7 @@ void USpawnerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	{
 		return;
 	}
-	
+
 	if (CurrentTime > SpawnTime)
 	{
 		FActorSpawnParameters SpawnParameters;

@@ -1,11 +1,13 @@
 ﻿#include "FCSpawnerEditor.h"
 
 #include "UnrealEdGlobals.h"
-#include "Visualizers/FCSpawnerVisualizer.h"
 #include "ComponentVisualizers.h"
 #include "EditorModeRegistry.h"
 #include "Selection.h"
 #include "Editor/UnrealEdEngine.h"
+
+#include "Visualizers/FCSpawnerVisualizer.h"
+#include "Components/SpawnerComponent.h"
 #include "EditorModes/FCSpawnerEdMode.h"
 
 #define LOCTEXT_NAMESPACE "FCSpawnerEditorModule"
@@ -18,13 +20,12 @@ void FFCSpawnerEditorModule::StartupModule()
 	FModuleManager::LoadModuleChecked<FComponentVisualizersModule>("UnrealEd");
 	if (GUnrealEd)
 	{
-		UE_LOG(FCSpawnerEditor, Display, TEXT("SpawnerComponentVisualize 등록"))
 		// SpawnerComponentVisualize 등록
 		FComponentVisualizersModule& ComponentVisualizerModule = FModuleManager::LoadModuleChecked<FComponentVisualizersModule>("ComponentVisualizers");
 		ComponentVisualizerModule.RegisterComponentVisualizer(USpawnerComponent::StaticClass()->GetFName(), MakeShared<FFCSpawnerComponentVisualizer>());
 	}
 
-	// 스포너 에디터 모드 등록
+	// Spawner 편집기 모드 등록
 	FEditorModeRegistry::Get().RegisterMode<FFCSpawnerEdMode>(
 		FFCSpawnerEdMode::ModeID,
 		FText::FromString(TEXT("스포너")),
@@ -36,15 +37,18 @@ void FFCSpawnerEditorModule::StartupModule()
 void FFCSpawnerEditorModule::ShutdownModule()
 {
 	if (GUnrealEd)
-	{
-		TSharedPtr<FComponentVisualizer> SpawnerVisualizer = GUnrealEd->FindComponentVisualizer(USpawnerComponent::StaticClass()->GetFName());
+	{		
+		// SpawnerComponentVisualizer 해제
+		{
+			TSharedPtr<FComponentVisualizer> SpawnerVisualizer = GUnrealEd->FindComponentVisualizer(USpawnerComponent::StaticClass()->GetFName());
 		
-		// OnSelected 해제
-		USelection::SelectionChangedEvent.RemoveAll(SpawnerVisualizer.Get());
-		USelection::SelectObjectEvent.RemoveAll(SpawnerVisualizer.Get())
-		;
-		// SpawnerComponentVisualize 해제
-		GUnrealEd->UnregisterComponentVisualizer(USpawnerComponent::StaticClass()->GetFName());
+			// SelectionChangedEvent 해제
+			USelection::SelectionChangedEvent.RemoveAll(SpawnerVisualizer.Get());
+			USelection::SelectObjectEvent.RemoveAll(SpawnerVisualizer.Get());
+		
+			// 해제
+			GUnrealEd->UnregisterComponentVisualizer(USpawnerComponent::StaticClass()->GetFName());
+		}
 	}
 }
 

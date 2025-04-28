@@ -21,7 +21,6 @@ public class RPG : ModuleRules
 			"Settings",
 			"FCUtilities",
 			"FCSpawner",
-			"FCSpawnerEditor",
 			"GameplayAbilities",
 			"GameplayTags",
 			"GameplayTasks",
@@ -34,6 +33,7 @@ public class RPG : ModuleRules
 			PrivateDependencyModuleNames.AddRange(new string[]
 			{
 				"UnrealEd",
+				"FCSpawnerEditor",	
 			});
 		}
 	}

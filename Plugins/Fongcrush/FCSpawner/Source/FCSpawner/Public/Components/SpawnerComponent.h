@@ -42,6 +42,7 @@ class FCSPAWNER_API USpawnerComponent : public USceneComponent
 	GENERATED_BODY()
 
 	friend class FFCSpawnerComponentVisualizer;
+	friend class UEditorWorldSpawnerSubSystem;
 	friend class FFCSpawnerEdMode;
 	
 public:
@@ -53,8 +54,12 @@ public:
 	virtual void OnRegister() override;
 	/** 미리보기 삭제 */
 	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
-	/** 미리보기 엑터 초기화 & 생성 함수 */ 
-	virtual void InitPreview();
+	/** 미리보기 생성 */ 
+	virtual void NewPreview();
+	virtual void Reset();
+	virtual void DestroyPreview();
+	FORCEINLINE void MarkSelectInEdMode(const bool& bNew) { bIsSelectedInEdMode = bNew; }
+	FORCEINLINE bool IsSelectedInEdMode() const { return bIsSelectedInEdMode; }
 #endif
 	
 	virtual void BeginPlay() override;
@@ -67,6 +72,7 @@ protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
+	
 	UPROPERTY(EditAnywhere, Category = "Spawner")
 	TSubclassOf<AActor> ActorClass;
 
@@ -85,8 +91,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Spawner")
 	bool bAttached;
 
-public:
 #if WITH_EDITORONLY_DATA
-	TWeakObjectPtr<class ASpawnerPreviewActor> PreviewActor;
+	UPROPERTY(meta = (HideInComponentTree))
+	TSet<TObjectPtr<UPrimitiveComponent>> PreviewComponents;
+
+private:
+	UPROPERTY()
+	bool bIsSelectedInEdMode;
 #endif
 };

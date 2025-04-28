@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "ComponentVisualizer.h"
-#include "Components/SpawnerComponent.h"
 
 
 class FCSPAWNEREDITOR_API FFCSpawnerComponentVisualizer : public FComponentVisualizer
@@ -12,10 +11,9 @@ class FCSPAWNEREDITOR_API FFCSpawnerComponentVisualizer : public FComponentVisua
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	/** 초기화 */
 	virtual void OnRegister() override;
-	virtual void RegisterSelectionEvent();
-	virtual void UnRegisterBindSelectionEvents();
-	/** USelection Select Event 함수 */
-	virtual void OnSelected(UObject* Object);
+	void RegisterSelectionChangedEvent();
+	void UnRegisterSelectionChangedEvent();
+	
 	virtual void DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI) override;
 	virtual void DrawVisualizationHUD(const UActorComponent* Component, const FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
 
@@ -28,18 +26,20 @@ class FCSPAWNEREDITOR_API FFCSpawnerComponentVisualizer : public FComponentVisua
 	virtual bool HandleModifiedClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click) override;
 	/** HandleModifiedClick == false일 경우 호출 */ 
 	virtual bool VisProxyHandleClick(FEditorViewportClient* InViewportClient, HComponentVisProxy* VisProxy, const FViewportClick& Click) override;
+	
 	/** VisProxyHandleClick == true && RightClick일 경우 호출 */
 	virtual TSharedPtr<SWidget> GenerateContextMenu() const override;
 
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
 	//	VARIABLES & PROPERTIES
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
-	TObjectPtr<UMaterial> ValidMaterial;
-	TObjectPtr<UMaterial> ValidMaterial2;
-	TObjectPtr<UMaterial> InvalidMaterial;
-	TObjectPtr<UMaterial> InvalidMaterial2;
-	TObjectPtr<UMaterial> SelectedMaterial;
-	TObjectPtr<UMaterial> SelectedMaterial2;
+	TObjectPtr<UMaterialInterface> ValidMaterial;
+	TObjectPtr<UMaterialInterface> ValidMaterial2;
+	TObjectPtr<UMaterialInterface> InvalidMaterial;
+	TObjectPtr<UMaterialInterface> InvalidMaterial2;
+	TObjectPtr<UMaterialInterface> SelectedMaterial;
+	TObjectPtr<UMaterialInterface> SelectedMaterial2;
 
 	FDelegateHandle OnSelectedHandle;
+	TArray<UObject*> SelectedSpawners;
 };
