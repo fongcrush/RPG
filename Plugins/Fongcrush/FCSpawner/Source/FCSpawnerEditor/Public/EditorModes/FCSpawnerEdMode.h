@@ -6,7 +6,7 @@
 #include "EdMode.h"
 #include "SubSystems/SpawnerSubSystem.h"
 
-class UEditorWorldSpawnerSubSystem;
+class USpawnerSubSystem;
 /**
  * 
  */
@@ -23,11 +23,6 @@ private:
 	virtual void Enter() override;
 	virtual void Exit() override;
 
-	// USelection Event용 함수들
-	virtual void RegisterSelectedEvent();
-	virtual void UnRegisterSelectedEvent();
-	virtual void OnSelectedEvent(UObject* Object);
-	
 	virtual void Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI) override;
 	virtual void DrawHUD(FEditorViewportClient* ViewportClient, FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
 	virtual bool HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click) override;
@@ -55,7 +50,7 @@ private:
 	TObjectPtr<UMaterialInterface> SelectedMaterial;
 	TObjectPtr<UMaterialInterface> SelectedMaterial2;
 
-	TObjectPtr<UEditorWorldSpawnerSubSystem> SpawnerSubSystem;
+	TObjectPtr<USpawnerSubSystem> SpawnerSubSystem;
 
 	FDelegateHandle OnSelectedHandle;
 };

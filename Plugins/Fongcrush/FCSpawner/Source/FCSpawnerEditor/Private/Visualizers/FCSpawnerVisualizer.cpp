@@ -25,47 +25,48 @@ void FFCSpawnerComponentVisualizer::OnRegister()
 	check(SelectedMaterial)
 	SelectedMaterial2 = LoadObject<UMaterialInterface>(nullptr, TEXT("/FCSpawner/M_Debug_Selected_2.M_Debug_Selected_2"));
 	check(SelectedMaterial2)
-	
+
 	UnRegisterSelectionChangedEvent();
 	RegisterSelectionChangedEvent();
 }
 
 void FFCSpawnerComponentVisualizer::RegisterSelectionChangedEvent()
 {
-	OnSelectedHandle = USelection::SelectionChangedEvent.AddSPLambda(this, [&](UObject* const& Object)
+	SelectionChangedEventHandle = USelection::SelectionChangedEvent.AddSPLambda(this, [&](UObject* const& Object)
 	{
 		if (!IsValid(Object)) return;
 
 		// USelection::SelectionChangedEvent 의 파라미터는 선택된 오브젝트 자체가 아닌, USelection 객체임
 		USelection* Selection = Cast<USelection>(Object);
-
 		TArray<UObject*> PreviousSelectedSpawners = SelectedSpawners;
-		if (Selection->GetSelectedObjects(USpawnerComponent::StaticClass(), SelectedSpawners) > 0)
+
+		const int32 SelectedSpawnerNum = Selection->GetSelectedObjects(USpawnerComponent::StaticClass(), SelectedSpawners);
+		if (SelectedSpawnerNum > 0)
 		{
-			for (auto& SelectedObject : SelectedSpawners)
+			for (UObject* const& SelectedObject : SelectedSpawners)
 			{
 				USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(SelectedObject);
-				if (SelectedSpawner == nullptr) continue;
+				if (!IsValid(SelectedSpawner)) continue;
 
-				for (const auto& PreviewComp : SelectedSpawner->PreviewComponents)
+				for (TObjectPtr<UPrimitiveComponent>& PrimitiveComp : SelectedSpawner->PreviewComponents)
 				{
-					if (!IsValid(PreviewComp)) continue;
-					PreviewComp->SetRenderCustomDepth(true); // 윤곽선 설정
+					if (!IsValid(PrimitiveComp)) continue;
+					PrimitiveComp->SetRenderCustomDepth(true); // 선택 강조 효과
 				}
 			}
 		}
 		else
 		{
-			// 선택된 Spawner가 전혀 없을 경우 모든 윤곽선 해제
-			for (auto& PrevSelected : PreviousSelectedSpawners)
+			// 모든 윤곽선 해제
+			for (UObject* const& SelectedObject : PreviousSelectedSpawners)
 			{
-				USpawnerComponent* PreviousSpawner = Cast<USpawnerComponent>(PrevSelected);
-				if (PreviousSpawner == nullptr) continue;
+				USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(SelectedObject);
+				if (!IsValid(SelectedSpawner)) continue;
 
-				for (const auto& PreviewComp : PreviousSpawner->PreviewComponents)
+				for (TObjectPtr<UPrimitiveComponent>& PrimitiveComp : SelectedSpawner->PreviewComponents)
 				{
-					if (!IsValid(PreviewComp)) continue;
-					PreviewComp->SetRenderCustomDepth(false); // 윤곽선 해제
+					if (!IsValid(PrimitiveComp)) continue;
+					PrimitiveComp->SetRenderCustomDepth(false); // 선택 강조 효과 해제
 				}
 			}
 		}
@@ -74,9 +75,9 @@ void FFCSpawnerComponentVisualizer::RegisterSelectionChangedEvent()
 
 void FFCSpawnerComponentVisualizer::UnRegisterSelectionChangedEvent()
 {
-	USelection::SelectionChangedEvent.Remove(OnSelectedHandle);
+	USelection::SelectionChangedEvent.Remove(SelectionChangedEventHandle);
 
-	// 모든 윤곽선 비활성화
+	// 모든 선택 강조 효과 비활성화
 	for (auto& Selected : SelectedSpawners)
 	{
 		USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(Selected);
@@ -102,6 +103,8 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 	// 현재 SpawnerEdMode일 경우 맡기고 종료 
 	if (GLevelEditorModeTools().IsModeActive(FFCSpawnerEdMode::ModeID)) return;
 
+	bool bIsSelected = Spawner->IsSelected();
+
 	const FVector SpawnerLocation = Spawner->GetComponentLocation();
 	const float Distance = FVector::Dist(View->ViewLocation, SpawnerLocation);
 	const float MaxDrawDistance = UFCSpawnerSettings::GetMaxDebugDrawDistance();
@@ -114,7 +117,7 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 	{
 		GEditor->GetSelectedComponents()->GetSelectedObjects(USpawnerComponent::StaticClass(), SelectedSpawners);
 
-		const FColor DebugColor = Spawner->IsSelected() ? FColor::Yellow : (Spawner->GetSpawnActorClass() ? FColor::White : FColor::Red);
+		const FColor DebugColor = bIsSelected ? FColor::Yellow : (Spawner->GetSpawnActorClass() ? FColor::White : FColor::Red);
 
 		// 위치 표시용 점
 		PDI->DrawPoint(SpawnerLocation, DebugColor, 15.f, SDPG_Foreground);
@@ -122,7 +125,7 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 		// 부모 엑터와의 연결 선
 		PDI->DrawLine(Spawner->GetOwner()->GetActorLocation(),
 		              Spawner->GetComponentLocation(),
-		              Spawner->IsSelected() ? FColor::Orange : FColor::White,
+		              bIsSelected ? FColor::Orange : FColor::White,
 		              SDPG_Foreground,
 		              1.f);
 
@@ -133,7 +136,7 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 			const FMatrix ConeRotMat = FRotationMatrix(Spawner->GetComponentRotation() + FRotator(90, 0, 0));
 			const FMatrix ConePosMat = FTranslationMatrix(SpawnerLocation);
 			const FMatrix ConeToWorld = ConeScaleMat * ConeRotMat * ConePosMat;
-			const UMaterialInterface* ConeMaterial = Spawner->IsSelected() ? SelectedMaterial2 : InvalidMaterial2;
+			const UMaterialInterface* ConeMaterial = bIsSelected ? SelectedMaterial2 : InvalidMaterial2;
 
 			// 원뿔 옆면 (DrawCone은 밑면 렌더링 X)
 			DrawCone(PDI,
@@ -153,7 +156,7 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 			         ConeMaterial->GetRenderProxy(),
 			         SDPG_World);
 
-			const UMaterialInterface* BottomMaterial = Spawner->IsSelected() ? SelectedMaterial : InvalidMaterial;
+			const UMaterialInterface* BottomMaterial = bIsSelected ? SelectedMaterial : InvalidMaterial;
 
 			// 바닥 구분용 원
 			DrawDisc(PDI,
@@ -164,20 +167,13 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 			         BottomMaterial->GetRenderProxy(),
 			         SDPG_World);
 		}
-		else if (Spawner->IsSelected())
-		{
-			for (auto& PreviewComp : Spawner->PreviewComponents)
-			{
-				// 윤곽선 설정
-				PreviewComp->SetRenderCustomDepth(true);
-			}
-		}
 		else
-		{			
-			for (auto& PreviewComp : Spawner->PreviewComponents)
+		{
+			// 선택 강조 설정
+			for (auto& PrimitiveComp : Spawner->PreviewComponents)
 			{
-				// 윤곽선 해제
-				PreviewComp->SetRenderCustomDepth(false);
+				if (!IsValid(PrimitiveComp)) continue;
+				PrimitiveComp->SetRenderCustomDepth(bIsSelected);
 			}
 		}
 	}
@@ -277,7 +273,7 @@ bool FFCSpawnerComponentVisualizer::HandleModifiedClick(FEditorViewportClient* I
 
 bool FFCSpawnerComponentVisualizer::VisProxyHandleClick(FEditorViewportClient* InViewportClient, HComponentVisProxy* VisProxy, const FViewportClick& Click)
 {
-	// 호출부에서 HitProxy 캐스팅 보장 됨
+	// VisProxy 유효성 보장 됨
 
 	if (!VisProxy->Component.IsValid()) return false;
 

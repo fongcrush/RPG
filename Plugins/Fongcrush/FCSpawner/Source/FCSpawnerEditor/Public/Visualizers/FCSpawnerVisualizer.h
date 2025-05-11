@@ -40,6 +40,8 @@ class FCSPAWNEREDITOR_API FFCSpawnerComponentVisualizer : public FComponentVisua
 	TObjectPtr<UMaterialInterface> SelectedMaterial;
 	TObjectPtr<UMaterialInterface> SelectedMaterial2;
 
-	FDelegateHandle OnSelectedHandle;
+	FDelegateHandle SelectionChangedEventHandle;
+	FDelegateHandle SelectObjectEventHandle;
+	
 	TArray<UObject*> SelectedSpawners;
 };

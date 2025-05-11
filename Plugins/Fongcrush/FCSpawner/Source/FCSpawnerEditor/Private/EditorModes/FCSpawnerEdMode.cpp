@@ -34,7 +34,7 @@ void FFCSpawnerEdMode::Initialize()
 	SelectedMaterial2 = LoadObject<UMaterialInterface>(nullptr, TEXT("/FCSpawner/M_Debug_Selected_2.M_Debug_Selected_2"));
 	check(SelectedMaterial2)
 
-	SpawnerSubSystem = GetWorld()->GetSubsystem<UEditorWorldSpawnerSubSystem>();
+	SpawnerSubSystem = GEngine->GetEngineSubsystem<USpawnerSubSystem>();
 	check(SpawnerSubSystem)
 }
 
@@ -42,12 +42,19 @@ void FFCSpawnerEdMode::Enter()
 {
 	FEdMode::Enter();
 
-	RegisterSelectedEvent();
+	// SpawnerVisualizer의 SelectionChangedEvent 등록 해제
+	TSharedPtr<FComponentVisualizer> ComponentVisualizer = GUnrealEd->FindComponentVisualizer(USpawnerComponent::StaticClass()->GetFName());
+	if (ComponentVisualizer.IsValid())
+	{
+		if (FFCSpawnerComponentVisualizer* SpawnerVisualizer = static_cast<FFCSpawnerComponentVisualizer*>(ComponentVisualizer.Get()))
+		{
+			SpawnerVisualizer->UnRegisterSelectionChangedEvent();
+		}
+	}
 
 	// Toolkit 생성
 	if (!Toolkit.IsValid())
 	{
-		
 		Toolkit = MakeShared<FFCSpawnerModeToolkit>();
 		Toolkit->Init(Owner->GetToolkitHost());
 
@@ -59,12 +66,21 @@ void FFCSpawnerEdMode::Enter()
 
 void FFCSpawnerEdMode::Exit()
 {
-	UnRegisterSelectedEvent();
+	// SpawnerVisualizer의 SelectionChangedEvent 다시 등록
+	TSharedPtr<FComponentVisualizer> ComponentVisualizer = GUnrealEd->FindComponentVisualizer(USpawnerComponent::StaticClass()->GetFName());
+	if (ComponentVisualizer.IsValid())
+	{
+		if (FFCSpawnerComponentVisualizer* SpawnerVisualizer = static_cast<FFCSpawnerComponentVisualizer*>(ComponentVisualizer.Get()))
+		{
+			SpawnerVisualizer->RegisterSelectionChangedEvent();
+		}
+	}
 
 	// 툴킷 종료
 	FToolkitManager::Get().CloseToolkit(Toolkit.ToSharedRef());
 	Toolkit.Reset();
 
+	// 선택 강조 해제
 	for (const auto& Spawner : SpawnerSubSystem->Spawners)
 	{
 		for (auto& PreviewComp : Spawner->PreviewComponents)
@@ -72,54 +88,8 @@ void FFCSpawnerEdMode::Exit()
 			PreviewComp->SetRenderCustomDepth(false); // 윤곽선 해제
 		}
 	}
-	
+
 	FEdMode::Exit();
-}
-
-void FFCSpawnerEdMode::RegisterSelectedEvent()
-{
-	/** 미리보기 선택의 개체 변환 주도를 SpawnerCompoennt 에서 SpawnerEdMode 로 변경 */
-
-	TSharedPtr<FComponentVisualizer> ComponentVisualizer = GUnrealEd->FindComponentVisualizer(USpawnerComponent::StaticClass()->GetFName());
-	if (ComponentVisualizer.IsValid())
-	{
-		if (FFCSpawnerComponentVisualizer* SpawnerVisualizer = static_cast<FFCSpawnerComponentVisualizer*>(ComponentVisualizer.Get()))
-		{
-			// SelectionChangedEvent에 SpawnerVisualizer 등록
-			SpawnerVisualizer->UnRegisterSelectionChangedEvent();
-		}
-	}
-
-	OnSelectedHandle = USelection::SelectionChangedEvent.AddSP(this, &FFCSpawnerEdMode::OnSelectedEvent);
-}
-
-void FFCSpawnerEdMode::UnRegisterSelectedEvent()
-{
-	/** 미리보기 선택의 개체 변환 주도를 SpawnerEdMode 에서 SpawnerCompoennt 로 복원 */
-
-	TSharedPtr<FComponentVisualizer> ComponentVisualizer = GUnrealEd->FindComponentVisualizer(USpawnerComponent::StaticClass()->GetFName());
-	if (ComponentVisualizer.IsValid())
-	{
-		if (FFCSpawnerComponentVisualizer* SpawnerVisualizer = static_cast<FFCSpawnerComponentVisualizer*>(ComponentVisualizer.Get()))
-		{
-			// SelectionChangedEvent에 SpawnerVisualizer 등록
-			SpawnerVisualizer->RegisterSelectionChangedEvent();
-		}
-	}
-
-	USelection::SelectObjectEvent.Remove(OnSelectedHandle);
-}
-
-void FFCSpawnerEdMode::OnSelectedEvent(UObject* Object)
-{
-	if (USpawnerComponent* Spawner = Cast<USpawnerComponent>(Object))
-	{
-		if (Spawner->IsSelected())
-		{
-			UE_LOG(FCSpawnerEditor, Display, TEXT("Selected %s"), *Object->GetName());
-			SelectSpawner(Spawner, true); // Spawner Proxy 선택
-		}
-	}
 }
 
 void FFCSpawnerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
@@ -128,6 +98,8 @@ void FFCSpawnerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 
 	for (const auto& Spawner : SpawnerSubSystem->Spawners)
 	{
+		bool bIsSelected = Spawner->IsSelectedInEdMode();
+
 		const FVector SpawnerLocation = Spawner->GetComponentLocation();
 		const float Distance = FVector::Dist(View->ViewLocation, SpawnerLocation);
 		const float& MaxDrawDistance = UFCSpawnerSettings::GetMaxDebugDrawDistance();
@@ -144,7 +116,7 @@ void FFCSpawnerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 			// 부모 엑터와의 연결 선
 			PDI->DrawLine(Spawner->GetOwner()->GetActorLocation(), Spawner->GetComponentLocation(), FColor::Orange, SDPG_Foreground, 1.f);
 
-			const FColor VisColor = Spawner->IsSelectedInEdMode() ? FColor::Yellow : Spawner->GetSpawnActorClass() ? FColor::Green : FColor::Red;
+			const FColor VisColor = bIsSelected ? FColor::Yellow : Spawner->GetSpawnActorClass() ? FColor::Green : FColor::Red;
 
 			// 위치 표시용 점
 			PDI->DrawPoint(SpawnerLocation, VisColor, 10.f, SDPG_Foreground);
@@ -157,7 +129,7 @@ void FFCSpawnerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 				const FMatrix ConePosMat = FTranslationMatrix(SpawnerLocation);
 				const FMatrix ArrowToWorld = ConeScaleMat * ConeRotMat * ConePosMat;
 
-				const UMaterialInterface* ConeMaterial = Spawner->IsSelectedInEdMode() ? SelectedMaterial2 : InvalidMaterial2;
+				const UMaterialInterface* ConeMaterial = bIsSelected ? SelectedMaterial2 : InvalidMaterial2;
 
 				// 원뿔 옆면 (DrawCone은 밑면 렌더링 X)
 				DrawCone(PDI,
@@ -177,7 +149,7 @@ void FFCSpawnerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 				         ConeMaterial->GetRenderProxy(),
 				         SDPG_World);
 
-				const UMaterialInterface* BottomMaterial = Spawner->IsSelectedInEdMode() ? SelectedMaterial : InvalidMaterial;
+				const UMaterialInterface* BottomMaterial = bIsSelected ? SelectedMaterial : InvalidMaterial;
 
 				// 바닥 구분용 원
 				DrawDisc(PDI,
@@ -192,22 +164,10 @@ void FFCSpawnerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 		// 시각화 그리기 종료
 		PDI->SetHitProxy(nullptr);
 
-
-		if (Spawner->IsSelectedInEdMode())
+		// 선택 강조 해제
+		for (const auto& PreviewComp : Spawner->PreviewComponents)
 		{
-			for (auto& PreviewComp : Spawner->PreviewComponents)
-			{
-				// 윤곽선 설정
-				PreviewComp->SetRenderCustomDepth(true);
-			}
-		}
-		else
-		{
-			for (auto& PreviewComp : Spawner->PreviewComponents)
-			{
-				// 윤곽선 해제
-				PreviewComp->SetRenderCustomDepth(false);
-			}
+			PreviewComp->SetRenderCustomDepth(bIsSelected); // 선택 강조 해제
 		}
 	}
 }
@@ -264,34 +224,23 @@ void FFCSpawnerEdMode::DrawHUD(FEditorViewportClient* ViewportClient, FViewport*
 bool FFCSpawnerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click)
 {
 	USpawnerComponent* ClickedSpawner = nullptr;
-
-	// HitProxy가 일반적인 Primitive 기반일 경우
+	
+	// 미리보기용 컴포넌트인지 확인. 커스텀 HitProxy가 아니라면 기본적으로 HActor 기반이다.
+	const HActor* ActorProxy = HitProxyCast<HActor>(HitProxy);
+	if (ActorProxy && ActorProxy->PrimComponent && SpawnerSubSystem->PreviewMap.Num() > 0)
 	{
-		// Custom HitProxy을 사용하지 않는 경우, HActor 기반
-
-		const HActor* ActorProxy = HitProxyCast<HActor>(HitProxy);
-
-		if (ActorProxy && ActorProxy->Actor && ActorProxy->PrimComponent)
+		TWeakObjectPtr<USpawnerComponent>* Spawner = SpawnerSubSystem->PreviewMap.Find(ActorProxy->PrimComponent);
+		if (Spawner && Spawner->IsValid())
 		{
-			// 미리보기 맵에 있는지 확인
-			if (SpawnerSubSystem->PreviewMap.Contains(ActorProxy->PrimComponent))
-			{
-				if (auto Spawner = SpawnerSubSystem->PreviewMap.Find(ActorProxy->PrimComponent))
-				{
-					if (Spawner->IsValid())
-					{
-						ClickedSpawner = Spawner->Get();
-					}
-				}
-			}
+			ClickedSpawner = Spawner->Get();
 		}
 	}
 
 	// HitProxy가 ComponentVisProxy 인 경우
 	if (ClickedSpawner == nullptr)
 	{
-		const HComponentVisProxy* VisProxy = HitProxyCast<HComponentVisProxy>(HitProxy);
 		// 캐스팅 체크
+		const HComponentVisProxy* VisProxy = HitProxyCast<HComponentVisProxy>(HitProxy);
 		if (VisProxy && VisProxy->Component.IsValid())
 		{
 			ClickedSpawner = const_cast<USpawnerComponent*>(Cast<USpawnerComponent>(VisProxy->Component.Get()));
@@ -305,7 +254,7 @@ bool FFCSpawnerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHit
 		{
 			// 기존에 선택한 Spawner가 아닌 경우
 			if (!ClickedSpawner->IsSelectedInEdMode())
-			{				
+			{
 				DeSelectAll();
 				SelectSpawner(ClickedSpawner, true);
 			}
@@ -445,7 +394,7 @@ void FFCSpawnerEdMode::SelectSpawner(const TWeakObjectPtr<UObject>& InSpawner, b
 {
 	// 트랜색션
 	FScopedTransaction Transaction(FText::FromString("Select Spawner"));
-	
+
 	if (!InSpawner.IsValid()) return;
 	USpawnerComponent* Spawner = Cast<USpawnerComponent>(InSpawner.Get());
 	Spawner->Modify();
@@ -481,7 +430,7 @@ void FFCSpawnerEdMode::DeSelectAll() const
 		SelectedSpawner->Modify();
 		SelectedSpawner->MarkSelectInEdMode(false);
 	}
-	
+
 	// 툴킷 디테일 뷰 리셋
 	if (FFCSpawnerModeToolkit* SpawnerToolkit = StaticCast<FFCSpawnerModeToolkit*>(Toolkit.Get()))
 	{
