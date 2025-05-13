@@ -29,31 +29,13 @@ USpawnerComponent::USpawnerComponent()
 void USpawnerComponent::Reset()
 {
 	DestroyPreview();
-	if (ActorTemplate)
-	{
-		USpawnerSubSystem* SpawnerSubSystem = GEngine->GetEngineSubsystem<USpawnerSubSystem>();
-		SpawnerSubSystem->Spawners.Remove(this);
-		SpawnerSubSystem->TemplateToSpawnerMap.Remove(ActorTemplate);
-		DestroyTemplate();
-	}
+	DestroyTemplate();
 	ActorClass = nullptr;
-	PreviousActorClass = nullptr;
 	SpawnTime = 0.0f;
 	CurrentTime = 0.0f;
 	CountPolicy = ESpawnCountPolicy::Once;
 	SpawnCount = 0;
 	bAttached = false;
-}
-
-void USpawnerComponent::PreEditChange(FProperty* PropertyAboutToChange)
-{
-	Super::PreEditChange(PropertyAboutToChange);
-
-	if (PropertyAboutToChange &&
-		PropertyAboutToChange->GetFName() == GET_MEMBER_NAME_CHECKED(USpawnerComponent, ActorClass))
-	{
-		PreviousActorClass = ActorClass;
-	}
 }
 
 void USpawnerComponent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -62,22 +44,30 @@ void USpawnerComponent::PostEditChangeProperty(struct FPropertyChangedEvent& Pro
 
 	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(USpawnerComponent, ActorClass) ||
-		PropertyName == GET_MEMBER_NAME_CHECKED(USpawnerComponent, ActorTemplate))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(USpawnerComponent, ActorClass))
 	{
-		UpdateTemplate();
+		DestroyTemplate();
+		if (ActorClass)
+		{
+			CreateTemplate();
+			UpdatePreview();
+		}
+	}
+	else if (PropertyName == GET_MEMBER_NAME_CHECKED(USpawnerComponent, ActorTemplate) && IsRegistered())
+	{
+		UpdatePreview();
 	}
 }
 
-void USpawnerComponent::PostLoad()
+void USpawnerComponent::CreateTemplate()
 {
-	Super::PostLoad();
+	AActor* Owner = GetOwner();
 
-	if (USpawnerSubSystem* SpawnerSubSystem = GEngine->GetEngineSubsystem<USpawnerSubSystem>())
-	{
-		SpawnerSubSystem->Spawners.Add(this);
-		UpdateTemplate();
-	}
+	const FName BaseName = *FString::Printf(TEXT("%s_%s_%s_Template"), Owner ? *Owner->GetName() : *FString("Null"), *GetName(), *ActorClass->GetName());
+	const FName TemplateName = MakeUniqueObjectName(this, ActorClass, BaseName);
+
+	constexpr EObjectFlags TemplateFlags = RF_ArchetypeObject | RF_Transactional | RF_Public;
+	ActorTemplate = NewObject<AActor>(this, ActorClass, TemplateName, TemplateFlags);
 }
 
 void USpawnerComponent::OnRegister()
@@ -97,9 +87,8 @@ void USpawnerComponent::OnUnregister()
 	if (USpawnerSubSystem* SpawnerSubSystem = GEngine->GetEngineSubsystem<USpawnerSubSystem>())
 	{
 		SpawnerSubSystem->Spawners.Remove(this);
-		SpawnerSubSystem->TemplateToSpawnerMap.Remove(ActorTemplate);
 	}
-	
+
 	Super::OnUnregister();
 }
 
@@ -109,88 +98,20 @@ void USpawnerComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	if (USpawnerSubSystem* SpawnerSubSystem = GEngine->GetEngineSubsystem<USpawnerSubSystem>())
 	{
 		SpawnerSubSystem->Spawners.Remove(this);
-		SpawnerSubSystem->TemplateToSpawnerMap.Remove(ActorTemplate);
 	}
 	DestroyTemplate();
 
 	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 
-void USpawnerComponent::BeginDestroy()
-{
-	DestroyPreview();
-	if (USpawnerSubSystem* SpawnerSubSystem = GEngine->GetEngineSubsystem<USpawnerSubSystem>())
-	{
-		SpawnerSubSystem->Spawners.Remove(this);
-		SpawnerSubSystem->TemplateToSpawnerMap.Remove(ActorTemplate);
-	}
-	DestroyTemplate();
-
-	Super::BeginDestroy();
-}
-
-void USpawnerComponent::UpdateTemplate()
-{
-	USpawnerSubSystem* SpawnerSubSystem = GEngine->GetEngineSubsystem<USpawnerSubSystem>();
-	if (PreviousActorClass && PreviousActorClass != ActorClass)
-	{
-		SpawnerSubSystem->TemplateToSpawnerMap.Remove(PreviousActorClass);
-		PreviousActorClass = nullptr;
-	}
-
-	if (ActorClass)
-	{
-		// 새 템플릿 생성
-		if (ActorTemplate == nullptr)
-		{
-			CreateTemplate();
-			SpawnerSubSystem->TemplateToSpawnerMap.Add(ActorTemplate, this);
-		}
-		else if (ActorTemplate->GetClass() != ActorClass)
-		{
-			SpawnerSubSystem->TemplateToSpawnerMap.Remove(ActorTemplate);
-			DestroyTemplate();
-
-			CreateTemplate();
-			SpawnerSubSystem->TemplateToSpawnerMap.Add(ActorTemplate, this);
-		}
-	}
-	else if (ActorTemplate)
-	{
-		SpawnerSubSystem->TemplateToSpawnerMap.Remove(ActorTemplate);
-		DestroyTemplate();
-	}
-}
-
-void USpawnerComponent::CreateTemplate()
-{
-	UWorld* World = GetWorld();
-	AActor* Owner = GetOwner();
-
-	ULevel* LevelToSpawnIn = World->PersistentLevel;
-	UPackage* LevelPackage = nullptr;
-	UPackage* TransientPackage = GetTransientPackage();
-
-	const FName BaseName = *FString::Printf(TEXT("%s_%s_%s_Template"), Owner ? *Owner->GetName() : *FString("Null"), *GetName(), *ActorClass->GetName());
-	const FName TemplateName = MakeUniqueObjectName(LevelToSpawnIn, ActorClass, BaseName);
-
-	constexpr EObjectFlags TemplateFlags = RF_ArchetypeObject | RF_Transactional | RF_Public;
-
-	ActorTemplate = NewObject<AActor>(TransientPackage,
-	                                  ActorClass,
-	                                  TemplateName,
-	                                  TemplateFlags,
-	                                  nullptr, false, nullptr,
-	                                  Owner->GetPackage());
-	//ActorTemplate->SetExternalPackage(GetPackage());
-}
-
 void USpawnerComponent::DestroyTemplate()
 {
-	// ActorTemplate->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors);
-	ActorTemplate->SetExternalPackage(nullptr);
-	ActorTemplate->MarkAsGarbage();
-	ActorTemplate = nullptr;
+	if (IsValid(ActorTemplate))
+	{
+		ActorTemplate->Rename(nullptr, GetTransientPackage(), REN_DontCreateRedirectors);
+		ActorTemplate = nullptr;
+	}
+	DestroyPreview();
 }
 
 void USpawnerComponent::UpdatePreview()
@@ -199,8 +120,8 @@ void USpawnerComponent::UpdatePreview()
 
 	AActor* Owner = GetOwner();
 	UWorld* World = GetWorld();
-
-	if (IsTemplate() || !ActorClass || !Owner || !World || !(World->WorldType == EWorldType::Editor || World->WorldType == EWorldType::EditorPreview))
+	
+	if (!ActorClass || !Owner || !World || !(World->WorldType == EWorldType::Editor || World->WorldType == EWorldType::EditorPreview))
 	{
 		return;
 	}
@@ -233,15 +154,6 @@ void USpawnerComponent::UpdatePreview()
 		NewComp->Mobility = EComponentMobility::Movable;
 
 		Owner->AddOwnedComponent(NewComp);
-
-		// EditorPreview 에서 오작동이 있으므로 Editor 분기로 제한. 필수.
-		if (World->WorldType == EWorldType::Editor)
-		{
-			FName("", 60);
-		}
-		else if (World->WorldType == EWorldType::EditorPreview)
-		{
-		}
 
 		NewComp->RegisterComponent();
 		NewComp->AttachToComponent(this, FAttachmentTransformRules::KeepRelativeTransform);
@@ -352,29 +264,4 @@ void USpawnerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 		}
 	}
 	CurrentTime += DeltaTime;
-}
-
-
-FString USpawnerComponent::GetWorldTypeString(UObject* const& Object)
-{
-	if (IsValid(Object))
-	{
-		if (UWorld* World = Object->GetWorld())
-		{
-			FString WorldName = World->GetFullName();
-			switch (World->WorldType)
-			{
-			case EWorldType::None: return "None(" + WorldName + ")";
-			case EWorldType::Game: return "Game(" + WorldName + ")";
-			case EWorldType::Editor: return "Editor(" + WorldName + ")";
-			case EWorldType::PIE: return "PIE(" + WorldName + ")";
-			case EWorldType::EditorPreview: return "EditorPreview(" + WorldName + ")";
-			case EWorldType::GamePreview: return "GamePreview(" + WorldName + ")";
-			case EWorldType::GameRPC: return "GameRPC(" + WorldName + ")";
-			case EWorldType::Inactive: return "Inactive(" + WorldName + ")";
-			default: break;
-			}
-		}
-	}
-	return "InValid";
 }

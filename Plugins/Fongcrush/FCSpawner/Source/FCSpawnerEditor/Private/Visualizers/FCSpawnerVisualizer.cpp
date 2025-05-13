@@ -32,61 +32,88 @@ void FFCSpawnerComponentVisualizer::OnRegister()
 
 void FFCSpawnerComponentVisualizer::RegisterSelectionChangedEvent()
 {
-	SelectionChangedEventHandle = USelection::SelectionChangedEvent.AddSPLambda(this, [&](UObject* const& Object)
-	{
-		if (!IsValid(Object)) return;
-
-		// USelection::SelectionChangedEvent 의 파라미터는 선택된 오브젝트 자체가 아닌, USelection 객체임
-		USelection* Selection = Cast<USelection>(Object);
-		TArray<UObject*> PreviousSelectedSpawners = SelectedSpawners;
-
-		const int32 SelectedSpawnerNum = Selection->GetSelectedObjects(USpawnerComponent::StaticClass(), SelectedSpawners);
-		if (SelectedSpawnerNum > 0)
-		{
-			for (UObject* const& SelectedObject : SelectedSpawners)
-			{
-				USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(SelectedObject);
-				if (!IsValid(SelectedSpawner)) continue;
-
-				for (TObjectPtr<UPrimitiveComponent>& PrimitiveComp : SelectedSpawner->PreviewComponents)
-				{
-					if (!IsValid(PrimitiveComp)) continue;
-					PrimitiveComp->SetRenderCustomDepth(true); // 선택 강조 효과
-				}
-			}
-		}
-		else
-		{
-			// 모든 윤곽선 해제
-			for (UObject* const& SelectedObject : PreviousSelectedSpawners)
-			{
-				USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(SelectedObject);
-				if (!IsValid(SelectedSpawner)) continue;
-
-				for (TObjectPtr<UPrimitiveComponent>& PrimitiveComp : SelectedSpawner->PreviewComponents)
-				{
-					if (!IsValid(PrimitiveComp)) continue;
-					PrimitiveComp->SetRenderCustomDepth(false); // 선택 강조 효과 해제
-				}
-			}
-		}
-	});
+	SelectionChangedEventHandle = USelection::SelectionChangedEvent.AddSP(this, &FFCSpawnerComponentVisualizer::OnSelectionChanged);
 }
 
 void FFCSpawnerComponentVisualizer::UnRegisterSelectionChangedEvent()
 {
 	USelection::SelectionChangedEvent.Remove(SelectionChangedEventHandle);
 
-	// 모든 선택 강조 효과 비활성화
+	// 모든 선택 강조 효과 제거
 	for (auto& Selected : SelectedSpawners)
 	{
 		USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(Selected);
-		if (SelectedSpawner == nullptr) continue;
-
+		if (SelectedSpawner == nullptr)
+		{
+			continue;
+		}
 		for (const auto& PreviewComp : SelectedSpawner->PreviewComponents)
 		{
-			if (!IsValid(PreviewComp)) continue;
+			if (!IsValid(PreviewComp))
+			{
+				continue;
+			}
 			PreviewComp->SetRenderCustomDepth(false); // 윤곽선 해제
+		}
+	}
+}
+
+void FFCSpawnerComponentVisualizer::OnSelectionChanged(UObject* Object)
+{
+	if (!IsValid(Object))
+	{
+		return;
+	}
+	
+	UWorld* World = Object->GetWorld();
+	if (!Object->GetWorld() || World->WorldType != EWorldType::Editor)
+	{
+		return;
+	}
+
+	// USelection::SelectionChangedEvent 의 파라미터는 선택된 오브젝트 자체가 아닌, USelection 객체임
+	USelection* Selection = Cast<USelection>(Object);
+	TArray<UObject*> PreviousSelectedSpawners = SelectedSpawners;
+
+	const int32 SelectedSpawnerNum = Selection->GetSelectedObjects(USpawnerComponent::StaticClass(), SelectedSpawners);
+	if (SelectedSpawnerNum > 0) // 선택된 Spawner가 있는 경우
+	{
+		// 선택된 Spawner 모두 강조
+		for (UObject* const& SelectedObject : SelectedSpawners)
+		{
+			USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(SelectedObject);
+			if (!IsValid(SelectedSpawner))
+			{
+				continue;
+			}
+			for (TObjectPtr<UPrimitiveComponent>& PrimitiveComp : SelectedSpawner->PreviewComponents)
+			{
+				if (!IsValid(PrimitiveComp))
+				{
+					continue;
+				}
+				PrimitiveComp->SetRenderCustomDepth(true); // 선택 강조 효과
+			}
+		}
+	}
+	else // 선택된 Spawner 없음
+	{
+		// 모든 윤곽선 해제
+		for (UObject* const& SelectedObject : PreviousSelectedSpawners)
+		{
+			USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(SelectedObject);
+			if (!IsValid(SelectedSpawner))
+			{
+				continue;
+			}
+			for (TObjectPtr<UPrimitiveComponent>& PrimitiveComp : SelectedSpawner->PreviewComponents)
+			{
+				if (!IsValid(PrimitiveComp))
+				{
+					continue;
+				}
+				PrimitiveComp->SetRenderCustomDepth(false); // 선택 강조 효과 해제
+			}
 		}
 	}
 }
@@ -98,26 +125,36 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 {
 	// 왜인지 모르겠지만 Component가 nullptr이거나 클래스가 다른 경우가 있음
 	const USpawnerComponent* Spawner = Cast<USpawnerComponent>(Component);
-	if (!IsValid(Spawner)) return;
+	if (!IsValid(Spawner))
+	{
+		return;
+	}
+
+	const UWorld* World = Spawner->GetWorld();
+	if (World)
+	{
+		return;
+	}
 
 	// 현재 SpawnerEdMode일 경우 맡기고 종료 
 	if (GLevelEditorModeTools().IsModeActive(FFCSpawnerEdMode::ModeID)) return;
 
-	bool bIsSelected = Spawner->IsSelected();
+	const bool bIsSelected = Spawner->IsSelected();
 
 	const FVector SpawnerLocation = Spawner->GetComponentLocation();
-	const float Distance = FVector::Dist(View->ViewLocation, SpawnerLocation);
 	const float MaxDrawDistance = UFCSpawnerSettings::GetMaxDebugDrawDistance();
+	const float Distance = FVector::Dist(View->ViewLocation, SpawnerLocation);
 
 	// 설정의 최대 거리 값보다 가까워야 통과
-	if (Distance > MaxDrawDistance) return;
+	if (MaxDrawDistance < Distance) return;
 
 	// 시각화 그리기 시작
 	PDI->SetHitProxy(new HComponentVisProxy(Spawner));
 	{
 		GEditor->GetSelectedComponents()->GetSelectedObjects(USpawnerComponent::StaticClass(), SelectedSpawners);
+		UClass* SpawnClass = Spawner->GetSpawnActorClass();
 
-		const FColor DebugColor = bIsSelected ? FColor::Yellow : (Spawner->GetSpawnActorClass() ? FColor::White : FColor::Red);
+		const FColor DebugColor = bIsSelected ? FColor::Yellow : (SpawnClass ? FColor::White : FColor::Red);
 
 		// 위치 표시용 점
 		PDI->DrawPoint(SpawnerLocation, DebugColor, 15.f, SDPG_Foreground);
@@ -130,7 +167,7 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 		              1.f);
 
 		// 생성할 엑터 클래스가 없을 경우
-		if (Spawner->GetSpawnActorClass() == nullptr)
+		if (SpawnClass == nullptr)
 		{
 			const FMatrix ConeScaleMat = FScaleMatrix(100.f);
 			const FMatrix ConeRotMat = FRotationMatrix(Spawner->GetComponentRotation() + FRotator(90, 0, 0));
@@ -167,12 +204,15 @@ void FFCSpawnerComponentVisualizer::DrawVisualization(
 			         BottomMaterial->GetRenderProxy(),
 			         SDPG_World);
 		}
-		else
+		else if (World->WorldType == EWorldType::Editor)
 		{
 			// 선택 강조 설정
 			for (auto& PrimitiveComp : Spawner->PreviewComponents)
 			{
-				if (!IsValid(PrimitiveComp)) continue;
+				if (!IsValid(PrimitiveComp))
+				{
+					continue;
+				}
 				PrimitiveComp->SetRenderCustomDepth(bIsSelected);
 			}
 		}
@@ -250,14 +290,14 @@ bool FFCSpawnerComponentVisualizer::HandleModifiedClick(FEditorViewportClient* I
 
 		if (Click.IsControlDown())
 		{
+			// 선택된 Spawner인 경우 선택 취소 / 아닌 경우 선택 
 			if (Spawner->IsSelected())
 			{
-				// 선택된 Spawner인 경우 선택 취소
+				
 				GEditor->SelectComponent(Spawner, false, true);
 			}
 			else
 			{
-				// 선택된 Spawner가 아닌 경우 선택 
 				GEditor->SelectComponent(Spawner, true, true);
 			}
 		}

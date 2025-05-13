@@ -25,7 +25,6 @@ class FCSPAWNER_API USpawnerSubSystem : public UEngineSubsystem
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
-	void OnObjectsReplaced(const TMap<UObject*, UObject*>& OldToNewMap);
 
 	static FString GetWorldTypeString(UObject* const& Object);
 	
@@ -39,10 +38,6 @@ public:
 	TSet<TWeakObjectPtr<USpawnerComponent>> Spawners;
 
 	TMap<UPrimitiveComponent*, TWeakObjectPtr<USpawnerComponent>> PreviewMap;
-	/** CDO 컴파일 시 미리보기에 변경사항 전파 용도 */
-	TMap<UObject*, USpawnerComponent*> TemplateToSpawnerMap;
-
-	FDelegateHandle ObjectsReplacedHandle;
 #endif
 };
 

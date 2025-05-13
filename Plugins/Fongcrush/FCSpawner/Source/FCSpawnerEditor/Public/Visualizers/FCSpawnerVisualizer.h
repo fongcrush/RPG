@@ -13,6 +13,7 @@ class FCSPAWNEREDITOR_API FFCSpawnerComponentVisualizer : public FComponentVisua
 	virtual void OnRegister() override;
 	void RegisterSelectionChangedEvent();
 	void UnRegisterSelectionChangedEvent();
+	void OnSelectionChanged(UObject* Object);
 	
 	virtual void DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI) override;
 	virtual void DrawVisualizationHUD(const UActorComponent* Component, const FViewport* Viewport, const FSceneView* View, FCanvas* Canvas) override;
