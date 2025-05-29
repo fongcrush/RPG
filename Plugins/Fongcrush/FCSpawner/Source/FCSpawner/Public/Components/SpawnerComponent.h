@@ -41,6 +41,7 @@ class FCSPAWNER_API USpawnerComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
+	friend class FFCSpawnerModule;
 	friend class FFCSpawnerComponentVisualizer;
 	friend class USpawnerSubSystem;
 	friend class FFCSpawnerEdMode;
@@ -50,8 +51,10 @@ public:
 #if WITH_EDITOR
 	/** 컨텍스트 메뉴에서 사용 */
 	virtual void Reset();
+	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 	/** 생성 클래스 변경시 기존 미리보기 제거 후 새 것 생성 */	
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void OnComponentCreated() override;
 	/** 생성 클래스가 있다면 미리보기 생성. OnComponentCreated 에서는 SpawnActor 가 실패함. */
 	virtual void OnRegister() override;
 	/** 객체 정리 */
@@ -71,7 +74,7 @@ public:
 
 	/** 수동으로 Actor를 생성 */
 	UFUNCTION(BlueprintCallable, Category = Spawner)
-	AActor* Spawn();
+	AActor* SpawnFromTemplate();
 	
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -79,6 +82,30 @@ public:
 	FORCEINLINE UClass* GetSpawnActorClass() const { return ActorClass; }
 	FORCEINLINE AActor* GetActorTemplate() const { return ActorTemplate; }
 	FORCEINLINE float GetSpawnTime() const { return SpawnTime; }
+
+	FORCEINLINE static const TSet<TWeakObjectPtr<USpawnerComponent>>& GetAllSpawners() { return AllRegistered; }
+	static USpawnerComponent* FindSpawnerFromPreview(const UPrimitiveComponent* const& Preview)
+	{
+		TWeakObjectPtr<USpawnerComponent>* SpawnerWeakPtr = PreviewToSpawnerMap.Find(Preview);
+		if (SpawnerWeakPtr && SpawnerWeakPtr->IsValid())
+		{
+			return SpawnerWeakPtr->Get();
+		}
+		return nullptr;
+	}
+
+	static int32 GetSelectedSpawners(TArray<UObject*>& OutSelected)
+	{
+		OutSelected.Reserve(AllRegistered.Num());
+		for (auto& Spawner : AllRegistered)
+		{
+			if (Spawner.IsValid() && Spawner->IsSelectedInEdMode())
+			{
+				OutSelected.Emplace(Spawner.Get());
+			}
+		}
+		return OutSelected.Num();
+	}
 	
 protected:
 	//〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓〓
@@ -114,5 +141,12 @@ protected:
 
 	UPROPERTY()
 	bool bIsSelectedInEdMode;
+
+	/** 모든 Spawner를 갖는 전역 Set */
+	static TSet<TWeakObjectPtr<USpawnerComponent>> AllRegistered;
+	/** 미리보기 클릭 판별 용도의 전역 맵 */
+	static TMap<UPrimitiveComponent*, TWeakObjectPtr<USpawnerComponent>> PreviewToSpawnerMap;
+	/** 템플릿의 디폴트 엑터 컴파일 시 프리뷰 갱신 용도의 전역 맵 */
+	static TMultiMap<UObject*, TWeakObjectPtr<USpawnerComponent>> ClassToSpawnersMap;
 #endif
 };

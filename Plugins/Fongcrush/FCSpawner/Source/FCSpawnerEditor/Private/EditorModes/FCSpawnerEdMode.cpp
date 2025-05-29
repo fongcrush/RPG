@@ -6,14 +6,11 @@
 #include "ComponentVisualizer.h"
 #include "EditorModeManager.h"
 #include "EngineUtils.h"
-#include "FCSpawnerEditor.h"
-#include "Selection.h"
 #include "UnrealEdGlobals.h"
 #include "Components/SpawnerComponent.h"
 #include "Editor/UnrealEdEngine.h"
 #include "EditorModes/FCSpawnerModeToolkit.h"
 #include "Settings/FCSpawnerSettings.h"
-#include "SubSystems/SpawnerSubSystem.h"
 #include "Toolkits/ToolkitManager.h"
 #include "Visualizers/FCSpawnerVisualizer.h"
 
@@ -33,9 +30,6 @@ void FFCSpawnerEdMode::Initialize()
 	check(SelectedMaterial)
 	SelectedMaterial2 = LoadObject<UMaterialInterface>(nullptr, TEXT("/FCSpawner/M_Debug_Selected_2.M_Debug_Selected_2"));
 	check(SelectedMaterial2)
-
-	SpawnerSubSystem = GEngine->GetEngineSubsystem<USpawnerSubSystem>();
-	check(SpawnerSubSystem)
 }
 
 void FFCSpawnerEdMode::Enter()
@@ -59,7 +53,7 @@ void FFCSpawnerEdMode::Enter()
 		Toolkit->Init(Owner->GetToolkitHost());
 
 		TArray<UObject*> SelectedSpawners;
-		SpawnerSubSystem->GetSelectedSpawners(SelectedSpawners);
+		USpawnerComponent::GetSelectedSpawners(SelectedSpawners);
 		StaticCastSharedPtr<FFCSpawnerModeToolkit>(Toolkit)->GetSpawnerDetailView()->SetObjects(SelectedSpawners);
 	}
 }
@@ -81,7 +75,7 @@ void FFCSpawnerEdMode::Exit()
 	Toolkit.Reset();
 
 	// 선택 강조 해제
-	for (const auto& Spawner : SpawnerSubSystem->Spawners)
+	for (const auto& Spawner : USpawnerComponent::GetAllSpawners())
 	{
 		for (auto& PreviewComp : Spawner->PreviewComponents)
 		{
@@ -96,7 +90,7 @@ void FFCSpawnerEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrim
 {
 	FEdMode::Render(View, Viewport, PDI);
 
-	for (const auto& Spawner : SpawnerSubSystem->Spawners)
+	for (const auto& Spawner : USpawnerComponent::GetAllSpawners())
 	{
 		bool bIsSelected = Spawner->IsSelectedInEdMode();
 
@@ -176,7 +170,7 @@ void FFCSpawnerEdMode::DrawHUD(FEditorViewportClient* ViewportClient, FViewport*
 {
 	FEdMode::DrawHUD(ViewportClient, Viewport, View, Canvas);
 
-	for (const auto& Spawner : SpawnerSubSystem->Spawners)
+	for (const auto& Spawner : USpawnerComponent::GetAllSpawners())
 	{
 		const FVector SpawnerLocation = Spawner->GetComponentLocation();
 		const float Distance = FVector::Dist(View->ViewLocation, SpawnerLocation);
@@ -227,12 +221,11 @@ bool FFCSpawnerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHit
 	
 	// 미리보기용 컴포넌트인지 확인. 커스텀 HitProxy가 아니라면 기본적으로 HActor 기반이다.
 	const HActor* ActorProxy = HitProxyCast<HActor>(HitProxy);
-	if (ActorProxy && ActorProxy->PrimComponent && SpawnerSubSystem->PreviewMap.Num() > 0)
+	if (ActorProxy && ActorProxy->PrimComponent)
 	{
-		TWeakObjectPtr<USpawnerComponent>* Spawner = SpawnerSubSystem->PreviewMap.Find(ActorProxy->PrimComponent);
-		if (Spawner && Spawner->IsValid())
+		if (USpawnerComponent* Spawner = USpawnerComponent::FindSpawnerFromPreview(ActorProxy->PrimComponent))
 		{
-			ClickedSpawner = Spawner->Get();
+			ClickedSpawner = Spawner;
 		}
 	}
 
@@ -298,7 +291,7 @@ bool FFCSpawnerEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHit
 TSharedPtr<SWidget> FFCSpawnerEdMode::GenerateContextMenu() const
 {
 	TArray<UObject*> SelectedSpawners;
-	if (SpawnerSubSystem->GetSelectedSpawners(SelectedSpawners))
+	if (USpawnerComponent::GetSelectedSpawners(SelectedSpawners))
 	{
 		return TSharedPtr<SWidget>();
 	}
@@ -409,7 +402,7 @@ void FFCSpawnerEdMode::SelectSpawner(const TWeakObjectPtr<UObject>& InSpawner, b
 	}
 
 	TArray<UObject*> SelectedSpawners;
-	SpawnerSubSystem->GetSelectedSpawners(SelectedSpawners);
+	USpawnerComponent::GetSelectedSpawners(SelectedSpawners);
 	// 툴킷에 선택된 Spawner 목록 전달 (디테일 뷰 업데이트)
 	if (FFCSpawnerModeToolkit* SpawnerToolkit = StaticCast<FFCSpawnerModeToolkit*>(Toolkit.Get()))
 	{
@@ -423,7 +416,7 @@ void FFCSpawnerEdMode::DeSelectAll() const
 	FScopedTransaction Transaction(FText::FromString(TEXT("Reset Selection")));
 
 	TArray<UObject*> SelectedSpawners;
-	SpawnerSubSystem->GetSelectedSpawners(SelectedSpawners);
+	USpawnerComponent::GetSelectedSpawners(SelectedSpawners);
 	for (auto& Selected : SelectedSpawners)
 	{
 		USpawnerComponent* SelectedSpawner = Cast<USpawnerComponent>(Selected);

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "EdMode.h"
-#include "SubSystems/SpawnerSubSystem.h"
 
 class USpawnerSubSystem;
 /**
@@ -49,8 +48,6 @@ private:
 	TObjectPtr<UMaterialInterface> InvalidMaterial2;
 	TObjectPtr<UMaterialInterface> SelectedMaterial;
 	TObjectPtr<UMaterialInterface> SelectedMaterial2;
-
-	TObjectPtr<USpawnerSubSystem> SpawnerSubSystem;
 
 	FDelegateHandle OnSelectedHandle;
 };

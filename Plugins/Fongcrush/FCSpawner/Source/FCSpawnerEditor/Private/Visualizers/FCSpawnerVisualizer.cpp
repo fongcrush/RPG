@@ -74,10 +74,10 @@ void FFCSpawnerComponentVisualizer::OnSelectionChanged(UObject* Object)
 	// USelection::SelectionChangedEvent 의 파라미터는 선택된 오브젝트 자체가 아닌, USelection 객체임
 	USelection* Selection = Cast<USelection>(Object);
 	TArray<UObject*> PreviousSelectedSpawners = SelectedSpawners;
-
+	
 	const int32 SelectedSpawnerNum = Selection->GetSelectedObjects(USpawnerComponent::StaticClass(), SelectedSpawners);
 	if (SelectedSpawnerNum > 0) // 선택된 Spawner가 있는 경우
-	{
+	{		
 		// 선택된 Spawner 모두 강조
 		for (UObject* const& SelectedObject : SelectedSpawners)
 		{
